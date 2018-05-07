@@ -3,7 +3,7 @@ function h = Explore2p(varargin)
 %% Make figure
 scrn = get(0,'Screensize');
 hfig = figure('Position',[scrn(3)*0.2 scrn(4)*0.05 scrn(3)*0.5 scrn(4)*0.5],...% [50 100 1700 900]
-    'Name','GUI_2p',...%,'KeyPressFcn',@KeyPressCallback,...
+    'Name','GUI_2p','KeyPressFcn',@KeyPressCallback,...
     'ToolBar', 'none'); % 'MenuBar', 'none'
 hold off; axis off
 
@@ -64,13 +64,8 @@ uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','Draw im',...
     'Callback',@pushbutton_drawIm_Callback);
 
 i=i+n;
-n=3; 
-uicontrol('Parent',tab{i_tab},'Style','text','String','Choose top _ ROI''s',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','right');
-
-i=i+n;
 n=2;
-uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','Draw im',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_ROIcount_Callback});
 
@@ -93,8 +88,6 @@ root = 'C:\Users\xiuye\Documents\2P_processed\';
 h = load(fullfile(filepath1, filename1));
 
 %% init
-h.hfig = getParentFigure(hObject);
-
 T = struct2table(h.dat.stat);
 h.M = zscore(h.dat.Fcell{1},0,2);
 h.IsCell = table2array(T(:,28));
@@ -108,7 +101,7 @@ h.cIX = h.IX_ROI;
 
 %% draw
 hfig = getParentFigure(hObject);
-h = RefreshFigure(h);
+h = RefreshFigure(h,hfig);
 
 %% save
 guidata(hObject, h);
@@ -120,36 +113,33 @@ hfig = getParentFigure(hObject);
 h = guidata(hObject);
 
 % select ROI's to plot
-h.n_topROIs = min(30,length(h.IX_ROI));
-h = ChooseROIs_default(h,h.n_topROIs);
+topN = min(30,length(h.IX_ROI));
+h = ChooseROIs_default(h,topN);
 
 % draw
-h = RefreshFigure(h);
+h = RefreshFigure(h,hfig);
 guidata(hObject, h);
 end
 
 function edit_ROIcount_Callback(hObject,~)
 str = get(hObject,'String');
-h = guidata(hObject);
-if ~isempty(str)
-    temp = textscan(str,'%d');% integer    
-    h.n_topROIs = temp{:};
-else
-    h.n_topROIs = length(h.IX_ROI);
+if ~isempty(str),
+    temp = textscan(str,'%d');% integer
+    if ~isempty(temp)
+        h.n_topROIs = temp{:};
+    else
+        h.n_topROI
 end
 
-h = ChooseROIs_default(h,h.n_topROIs);
 
-% draw
-h = RefreshFigure(h);
 guidata(hObject, h);
 end
 
-function h = RefreshFigure(h)
-figure(h.hfig);
+function h = RefreshFigure(h,hfig)
+figure(hfig);
 
 % clean-up canvas
-allAxesInFigure = findall(h.hfig,'type','axes');
+allAxesInFigure = findall(hfig,'type','axes');
 if ~isempty(allAxesInFigure)
     delete(allAxesInFigure);
 end
