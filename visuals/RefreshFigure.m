@@ -1,5 +1,4 @@
-function h = RefreshFigure(h)
-h = UpdateIndices(h);
+function h = refreshFigure(h)
 figure(h.hfig);
 
 % clean-up canvas
@@ -24,39 +23,18 @@ ax2_ht = pos(4)*0.8;
 h2 = axes('Units','pixels','Position',[pos(3)-ax2_ht-margin,margin,ax2_ht,ax2_ht],'Units','pixels');
 h1 = axes('Units','pixels','Position',[margin*2, margin, pos(3)-ax2_ht-margin*4, ax2_ht]);
 
-
-%% draw anat
-% right subplot
-axes(h2);
-h = DrawAnat(h);
-imagesc(h.im_anat);
-% Low_High  = [0,0.5];
-% im4 = imadjust(im3,Low_High);
-% imshow(im4)
-axis equal; axis off
-
-% add number labels of all ROI's (if not too many ROI's)
-cIX_abs = h.cIX_abs;
-if length(cIX_abs)<50
-    for i = 1:length(cIX_abs)
-        ichosen = cIX_abs(i);
-        x0 = mean(h.dat.stat(ichosen).xpix);
-        y0 = mean(h.dat.stat(ichosen).ypix);
-        clr = squeeze(hsv2rgb(h.clrmap(ichosen),1,1));
-        if x0>20
-            text(x0-10,y0,num2str(i),'color','w','HorizontalAlignment','right');%clr);
-        else
-            text(x0+10,y0,num2str(i),'color','w','HorizontalAlignment','left');%clr);
-        end
-    end
-end
+%% make colormap
+% h.clrmaptype = 'rand'; %'hsv';%% manual
+h = getColormap(h);
 
 %% draw traces
 % left subplot
 axes(h1);hold on;
-DrawTraces(h);
+drawTraces(h);
     
-
-
+%% draw anat
+% right subplot
+axes(h2);hold on;
+drawAnat(h);
 
 end

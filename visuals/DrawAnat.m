@@ -1,6 +1,5 @@
-function h = DrawAnat(h)
-cIX = h.cIX;
-cIX_abs = h.IX_ROI(cIX);
+function h = drawAnat(h)
+cIX_abs = h.cIX_abs; % cIX_abs = h.absIX(cIX);
 
 %% plot mean image with ROI's drawn on top.
 % mean image
@@ -29,14 +28,12 @@ H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
 % iselect     = iclust2==h.dat.F.ichosen;
 % Sat2(iselect)= 0;
 
-% % make colormap
-h.clrmaptype = 'hsv';
-if h.clrmaptype == 'hsv' % use HSV coding, which, in the Value channel includes information from 'lambda' (from ROI stats)
-    numK = length(cIX);
-    Hmap = linspace(0,0.8,numK); % to make a custom hsv map that doesn't include the circular overlap range in magenta-red (by not using range 0 to 1)
+%% get colors
+if strcmp(h.clrmaptype,'hsv')
+    % apply colors to anat map
     Hmap_abs = zeros(1,length(h.dat.stat)); % each cell gets a color, saved into h.clrmap for use across the gui
-    Hmap_abs(cIX_abs) = Hmap;
-
+    huemat = h.huemap(h.gIX,1);
+    Hmap_abs(cIX_abs) = huemat;
     % size of clrmap is now 1*numROIs
     H1(iclust1>0)   = Hmap_abs(iclust1(iclust1>0)); % size of H1 is X*Y
     
@@ -44,16 +41,16 @@ if h.clrmaptype == 'hsv' % use HSV coding, which, in the Value channel includes 
     % H1(iclust1>0)   = h.dat.cl.rands(iclust1(iclust1>0));
     % H2(iclust2>0)   = h.dat.cl.rands(iclust2(iclust2>0));
     
-    im_roi = hsv2rgb(cat(3, H1, Sat1, V1)); % convert HSV into RGB, size of I is X*Y*3
+    im_roi = hsv2rgb(cat(3, H1, Sat1, V1)); % convert HSV into RGB, size of im_roi is X*Y*3
     im_roi = min(im_roi, 1); % make sure no RGB values exceed 1, should all be between 0 and 1
+
     
-    clrmap = squeeze(hsv2rgb(cat(3, Hmap, ones(size(Hmap)), ones(size(Hmap)))));
-    
-else % use RGB (not tested)
-    numK = length(cIX);
-    clrmap = jet(numK);
-    clrmap_abs = zeros(1,length(h.dat.stat)); % each cell gets a color, saved into h.clrmap for use across the gui
-    clrmap_abs(cIX) = clrmap;
+else  % use RGB (not tested)
+    clrmap_abs = zeros(length(h.absIX),3); % each cell gets a color, saved into h.clrmap for use across the gui
+    clrmat = h.clrmap(h.gIX,:);
+    clrmap_abs(cIX_abs,1) = clrmat(:,1);
+    clrmap_abs(cIX_abs,2) = clrmat(:,2);
+    clrmap_abs(cIX_abs,3) = clrmat(:,3);
     
     % (the following is cumbersome but gets the indexing done)
     R = zeros(size(im_bg0));
@@ -83,6 +80,30 @@ im_anat(inew+2*numpix) = im_roi(inew+2*numpix); % ... and in Blue channel
 
 
 h.im_anat = im_anat; % output
-h.clrmap = clrmap;
 
+% Low_High  = [0,0.5];
+% im4 = imadjust(im3,Low_High);
+% imshow(im4)
+
+%% draw on current axes
+imagesc(h.im_anat);
+axis equal; axis off
+
+% add number labels of all ROI's (if not too many ROI's)
+cIX_abs = h.cIX_abs;
+if length(cIX_abs)<50
+    
+    [~,ix_sort] = sort(h.gIX,'ascend');
+    for i = 1:length(cIX_abs)
+        ii = ix_sort(i);
+        ichosen = cIX_abs(i);
+        x0 = mean(h.dat.stat(ichosen).xpix);
+        y0 = mean(h.dat.stat(ichosen).ypix);        
+        if x0>20
+            text(x0-10,y0,num2str(ii),'color','w','HorizontalAlignment','right');%clr);
+        else
+            text(x0+10,y0,num2str(ii),'color','w','HorizontalAlignment','left');%clr);
+        end
+    end
+end
 end

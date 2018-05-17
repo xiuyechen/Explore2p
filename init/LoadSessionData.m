@@ -1,4 +1,4 @@
-function h = LoadSessionData(h)
+function h = loadSessionData(h)
 disp('loading proc data');
 root = 'C:\Users\xiuye\Documents\2P_processed\';
 
@@ -18,7 +18,7 @@ h.dat = h_load.dat;
 T = struct2table(h.dat.stat);
 h.M = zscore(h.dat.Fcell{1},0,2);
 h.IsCell = table2array(T(:,28));
-h.IX_ROI = find(h.IsCell);
+h.absIX = find(h.IsCell);
 
 % time points
 h.t_start = 1;%2000;
@@ -27,11 +27,14 @@ h.t_stop = size(h.M,2);%3000;
 % init cell selection to display
 h.cIX = (1:100)';%(1:length(h.IX_ROI))';%h.IX_ROI;
 h.gIX = (1:length(h.cIX))';
-h.cIX_abs = h.IX_ROI(h.cIX);
+h.cIX_abs = h.absIX(h.cIX);
+h.numK = max(h.gIX);
+
 
 %% app flags
 h.clrmaptype = 'hsv';
-
+h.flag.plotLines = 1;
+% h.clrmaptype = 'rand'; 
 %% draw
-h = RefreshFigure(h);
+h = refreshFigure(h);
 end

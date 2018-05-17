@@ -1,5 +1,5 @@
 % frequently used, updates cell-index,group-index,cluster-number. set-operations included in here.
-function h = UpdateIndices(h)%(hfig,cIX,gIX,numK)
+function h = updateIndices(h,cIX,gIX,numK)
 % h = guidata(hObject);
 if ~exist('gIX','var')
     gIX = h.gIX;
@@ -8,18 +8,23 @@ if ~exist('cIX','var')
     cIX = h.cIX;
 end
 
+if ~exist('numK','var')
+    numK = h.numK;
+end
+
 if isempty(cIX)
     disp('empty set!');
 %     errordlg('empty set!');
     return;
 end
 
-% update cache
+%% update cache
 bC = h.backCache; 
 
 cIX_last = h.cIX;
 gIX_last = h.gIX;
-if ~(isequal(cIX_last,cIX))% && isequal(gIX_last,gIX))
+numK_last = h.numK;
+if ~(isequal(cIX_last,cIX) && isequal(gIX_last,gIX) && isequal(numK_last,numK))
     bC.cIX = [cIX_last,bC.cIX];
     bC.gIX = [gIX_last,bC.gIX];
     bC.numK = [h.numK,bC.numK];
@@ -101,17 +106,31 @@ end
 % end
 %%
 h.backCache = bC;
-h.cIX = cIX;
-h.gIX = gIX;
+
+
+[~,I] = sort(gIX);
+h.cIX = cIX(I);
+h.gIX = gIX(I);
+h.cIX_abs = h.absIX(h.cIX);
+
+% h.cIX = cIX;
+% h.gIX = gIX;
 
 % flag
 % M = GetTimeIndexedData(hfig);
 % setappdata(hfig,'M',M);
+h = getFuncData(h);
 
 if exist('numK','var')
     h.numK = double(numK);
 end
 
+h = getColormap(h);
+
+if length(h.cIX)>200
+    h.flag.plotLines = 0;
+    set(h.gui.plotlines,'Checked','off');
+end
 %% Resets: reset flags the NEXT time this function is called (so they only apply to this particular plot)
 % handle rankID: >=2 means write numbers as text next to colorbar
 % first UpdateIndices sets rankID to 100, second sets back to 0

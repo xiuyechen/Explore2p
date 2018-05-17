@@ -1,10 +1,15 @@
-function DrawTraces(h)
+function drawTraces(h)
 axis off
 cIX_abs = h.cIX_abs;
 gIX = h.gIX;
 
-
-if length(cIX_abs)<200 % draw individual traces
+switch h.flag.plotLines
+    case 0
+        imagesc(h.M); 
+        colormap(gray);
+        axis tight
+    case 1
+% if length(cIX_abs)<200 % draw individual traces
     
     
     pad = 1;
@@ -12,21 +17,33 @@ if length(cIX_abs)<200 % draw individual traces
     Fs = 15.3;            % Sampling frequency
     xv = (1:h.t_stop-h.t_start+1)/Fs;
     isdrawtext = length(cIX_abs)<50;
-    for i = 1:length(cIX_abs)
-        ichosen = cIX_abs(i);
-        igroup = gIX(i);
-        
-        F = [];
-        Fneu = [];
-        for j = 1:numel(h.dat.Fcell)
-            F    = cat(2, F, h.dat.Fcell{j}(ichosen, :));
-            Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
-        end
-        
-        y = double(F(h.t_start:h.t_stop));%my_conv_local(medfilt1(double(F), 3), 3);
-        y_m = y-mean(y);
-        y_n = y_m/(max(y_m)-min(y_m)); % divide by range for visualization... not df/f! % not using zscore(y);
-        
+    
+%     [~,ix_sort] = sort(gIX,'ascend');
+    
+
+    for ii = 1:length(cIX_abs)
+%         ii = ix_sort(i);
+%         ichosen = cIX_abs(ii);
+        igroup = gIX(ii);
+%         
+%         
+%         F = [];
+%         Fneu = [];
+%         for j = 1:numel(h.dat.Fcell)
+%             F    = cat(2, F, h.dat.Fcell{j}(ichosen, :));
+%             Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
+%         end
+%         coefNeu = 0.7 * ones(1, size(F,1));
+%     
+%     dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
+%         y = double(dF(h.t_start:h.t_stop));%my_conv_local(medfilt1(double(F), 3), 3);
+%         y_m = y-mean(y);
+%         y_n = y_m/10000;
+%         y_n = y_m/(max(y_m)-min(y_m)); % divide by range for visualization... not df/f! % not using zscore(y);
+
+        y_n = h.M(ii,:);
+        y_n = y_n/(max(y_n)-min(y_n));
+
         %     if isempty(h.gIX)
         clr = h.clrmap(igroup,:)*0.9;
         %  clr_hsv = rgb2hsv(clr);
@@ -39,10 +56,10 @@ if length(cIX_abs)<200 % draw individual traces
         %
         %     end
         
-        plot(xv,y_n - pad*(i-1),'color',clr);%[0.5,0.5,0.5])
+        plot(xv,y_n - pad*(ii-1),'color',clr);%[0.5,0.5,0.5])
         axis tight
         if isdrawtext
-            text(-1, 0.2- pad*(i-1),num2str(i),'HorizontalAlignment','right','color',[0.5,0.5,0.5]);
+            text(-1, 0.2- pad*(ii-1),num2str(ii),'HorizontalAlignment','right','color',[0.5,0.5,0.5]);
         end
     end
     % % label: number of ROI's
@@ -63,14 +80,16 @@ if length(cIX_abs)<200 % draw individual traces
     % text((xl(2)-xl(1))/2,base_y-1.5,str)
     
     
-else
-     ichosen = cIX_abs;
-        F = [];
-        Fneu = [];
-        for j = 1:numel(h.dat.Fcell)
-            F    = cat(2, F, h.dat.Fcell{j}(ichosen, :));
-            Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
-        end
-        imagesc(F);colormap(gray)
+% else
+%      ichosen = cIX_abs;
+%         F = [];
+%         Fneu = [];
+%         for j = 1:numel(h.dat.Fcell)
+%             F    = cat(2, F, h.dat.Fcell{j}(ichosen, :));
+%             Fneu = cat(2, Fneu, h.dat.FcellNeu{j}(ichosen, :));
+%         end
+%         imagesc(F);colormap(gray)
+% end
+
 end
 end
