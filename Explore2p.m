@@ -2,7 +2,9 @@ function h = Explore2p(varargin)
 
 %% Make figure
 scrn = get(0,'Screensize');
-hfig = figure('Position',[scrn(3)*0.2 scrn(4)*0.05 scrn(3)*0.5 scrn(4)*0.5],...% [50 100 1700 900]
+fig_width = scrn(3)*0.5;
+fig_height = scrn(4)*0.5;
+hfig = figure('Position',[scrn(3)*0.2, scrn(4)*0.05, fig_width, fig_height],...% [50 100 1700 900]
     'Name','GUI_2p',...%,'KeyPressFcn',@KeyPressCallback,...
     'ToolBar', 'none','MenuBar', 'none',...
     'ResizeFcn',@resizeMainFig_callback); %
@@ -21,16 +23,8 @@ bCache.numK = cell(1,1);
 fCache.cIX = cell(1,1);
 fCache.gIX = cell(1,1);
 fCache.numK = cell(1,1);
-h.backCache = bCache;
-h.fwCache = fCache;
-
-% testing phase: init load demo data
-global isTesting;
-isTesting = 1;
-if isTesting
-    h = loadSessionData(h);
-end
-
+h.gui.backCache = bCache;
+h.gui.fwCache = fCache;
 
 %% Make menu
 % 1. File
@@ -55,119 +49,91 @@ h.gui.forward = uimenu(hm_edit,'Label','Forward',...
 hm_vis = uimenu(hfig,'Label','Visuals');
 
 uimenu(hm_vis,'Label','Refresh',...
-    'Callback',@refresh_Callback);
+    'Callback',@menu_refresh_Callback);
 
 h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
     'Checked','on',...
-    'Callback',@toggle_plotlines_Callback);
+    'Callback',@menu_plotlines_Callback);
 
-hm_colormap = uimenu(hm_vis,'Label','Colormap');
-
-h.gui.hsv = uimenu(hm_colormap,'Label','hsv',...
+h.gui.plotLines = uimenu(hm_vis,'Label','Sqeeze colors',...
     'Checked','on',...
-    'Callback',@toggle_plotlines_Callback);
-% ,...
-%     'Checked','on',...
-%     'Callback',@toggle_plotlines_Callback);
+    'Callback',@menu_sqeeze_Callback);
 
 %% Create UI controls
-set(gcf,'DefaultUicontrolUnits','normalized');
+set(gcf,'DefaultUicontrolUnits','pixels');
 set(gcf,'defaultUicontrolBackgroundColor',[1 1 1]);
 
 % tab group setup
-tgroup = uitabgroup('Parent', hfig, 'Position', [0.05,0.88,0.91,0.12]);
-numtabs = 6;
+h.gui.tgroup = uitabgroup('Parent', hfig, 'Unit','pixels','Position', [50,fig_height-80,fig_width-100,80]);
+numtabs = 5;
 tab = cell(1,numtabs);
-M_names = {'General','Operations','Regression','Clustering etc.','Saved Clusters','Atlas'};
+M_names = {'General','Operations','Regression','Clustering etc.','Saved Clusters'};
 for i = 1:numtabs
-    tab{i} = uitab('Parent', tgroup, 'BackgroundColor', [1,1,1], 'Title', M_names{i});
+    tab{i} = uitab('Parent', h.gui.tgroup, 'BackgroundColor', [1,1,1], 'Title', M_names{i});
 end
 
-
 % grid setup, to help align display elements
-rheight = 0.5;
-yrow = 0.5:-0.5:0;%0.97:-0.03:0.88;
-dTextHt = 0.05; % dTextHt = manual adjustment for 'text' controls:
+rheight = 20;
+yrow = 1.5*rheight:-rheight:-0.5*rheight;
+dTextHt = 0; % dTextHt = manual adjustment for 'text' controls:
 % (vertical alignment is top instead of center like for all other controls)
-bwidth = 0.03;
-grid = 0:bwidth+0.001:1;
+bwidth = 30;
+grid = 5:bwidth+5:20*bwidth;
 
-
-%% tabs
-
+%% UI tab 1: General
 i_tab = 1;
 
-%% UI row 1: File
+% edit_selectROIrange_Callback
+i=1;n=3;
 i_row = 1;
-i = 1;n = 0;
-i=i+n;
-
-% n=2; % Export
-% uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','Export',...
-%     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-%     'Callback',@pushbutton_Export_Callback);
-
-% i=i+n;
-% n=2;
-% uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','load .mat',...
-%     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-%     'Callback',@pushbutton_loadmat_Callback);
-
-i=i+n;
-n=2;
-uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','rank sk',...
-    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-    'Callback',@rank_by_skewness);
-
-i=i+n;
-n=3;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Choose top _ ROI''s',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','right');
-
-i=i+n;
-n=2;
-uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
-    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-    'Callback',{@edit_ROIcount_Callback});
-
-i=i+n;
-n=3;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Choose ROI range:',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','right');
-i=i+n;
-n=2;
+uicontrol('Parent',tab{i_tab},'Style','text','String','ROI range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_selectROIrange_Callback});
-i=i+n;
-n=3;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Choose cluster range:',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','right');
-i=i+n;
-n=2;
+
+% edit_selectClusterRange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_selectClusterRange_Callback});
 
-i=i+n;
-n=2; % rank clusters based on various criteria (to choose)
-uicontrol('Parent',tab{i_tab},'Style','text','String','Rank by:',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','right');
-
-i=i+n; % 'hier' is the same as default (used after every k-means);'stim-lock' uses std across reps;
-n=2; % motor stuff uses the best alignment (by cross-correlation) with the behavior trace;
-% L+R is average of L & R; stim-motor is combines 'stim-lock' w 'motor' with arbituary weighting.
-menu = {'(choose)','hier.','size','stim-lock','corr','motor','L motor','R motor','L+R motor',...
-    'fft','inverse sparseness','multi-motor w/ stim-avr','sparseness'};
+% popup_ranking_Callback
+i=i+n;n=3; 
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Rank criteria',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+menu = {'(choose)','max value','skewness','num pixels'};
 uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@popup_ranking_Callback});
 
-i=i+n;
-n=3; % cluster indices will rank from 1 to number of clusters
-uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','Sqeeze clusters',...
+% popup_chooseclrmap_Callback
+i=i+n;n=3; 
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Colormap',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
+    'String',{'hsv','random clrs','jet','hsv(old)'},...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-    'Callback',@pushbutton_sqeeze_Callback);
+    'Callback',@popup_chooseclrmap_Callback);
+
+
+%%
+% testing phase: init load demo data
+global isTesting;
+isTesting = 1;
+if isTesting
+    h = loadSessionData(h);
+    refreshFigure(h);
+end
 
 %% save
 guidata(hfig, h);
@@ -181,6 +147,8 @@ function loadmat_Callback(hObject,~)
 h = guidata(hObject);
 h = loadSessionData(h);
 guidata(hObject, h);
+
+refreshFigure(h);
 end
 
 % 1.2
@@ -192,8 +160,8 @@ end
 % 2.1
 function back_Callback(hObject,~)
 h = guidata(hObject);
-bC = h.backCache;
-fC = h.fwCache;
+bC = h.gui.backCache;
+fC = h.gui.fwCache;
 
 if ~isempty(bC.cIX{1})
     % set last into forward cache
@@ -208,12 +176,8 @@ if ~isempty(bC.cIX{1})
     bC.gIX(1) = [];
     bC.numK(1) = [];
     
-    h.backCache = bC;
-    h.fwCache = fC;
-    % flag
-    %     setappdata(hfig,'rankID',0);
-    %     M = GetTimeIndexedData(hfig);
-    %     setappdata(hfig,'M',M);
+    h.gui.backCache = bC;
+    h.gui.fwCache = fC;    
     h.cIX_abs = h.absIX(h.cIX);
     h = getFuncData(h);
     
@@ -230,8 +194,8 @@ end
 % 2.2
 function forward_Callback(hObject,~)
 h = guidata(hObject);
-bC = h.backCache;
-fC = h.fwCache;
+bC = h.gui.backCache;
+fC = h.gui.fwCache;
 
 if ~isempty(fC.cIX{1})
     % set last into (backward) cache
@@ -246,14 +210,11 @@ if ~isempty(fC.cIX{1})
     fC.gIX(1) = [];
     fC.numK(1) = [];
     
-    h.backCache = bC;
-    h.fwCache = fC;
+    h.gui.backCache = bC;
+    h.gui.fwCache = fC;
     % handle rankID: >=2 means write numbers as text next to colorbar
     %     setappdata(hfig,'rankID',0);
-    
-    % flag
-    %     M = GetTimeIndexedData(hfig);
-    %     setappdata(hfig,'M',M);
+
     h.cIX_abs = h.absIX(h.cIX);
     h = getFuncData(h);
     
@@ -269,15 +230,14 @@ end
 
 
 %% 3.1
-function refresh_Callback(hObject,~)
+function menu_refresh_Callback(hObject,~)
 h = guidata(hObject);
 h = refreshFigure(h);
 guidata(hObject, h);
 end
 
-function toggle_plotlines_Callback(hObject,~)
+function menu_plotlines_Callback(hObject,~)
 h = guidata(hObject);
-% flag = get(h.gui.plotLines,'Checked');
 h = toggleMenu(h,h.gui.plotLines,'plotLines');
 refreshFigure(h);
 guidata(hObject, h);
@@ -287,42 +247,12 @@ function h = toggleMenu(h,menu_handle,flag_string)
 % toggle
 currentflag = get(h.gui.plotLines,'Checked');
 if strcmp(currentflag,'off')
-    set(menu_handle,'Checked','on');    
-    h.flag = setfield(h.flag,flag_string,1);
+    set(menu_handle,'Checked','on');
+    h.ops = setfield(h.ops,flag_string,1);
 elseif strcmp(currentflag,'on')
     set(menu_handle,'Checked','off');
-    h.flag = setfield(h.flag,flag_string,0);
+    h.ops = setfield(h.ops,flag_string,0);
 end
-end
-% function pushbutton_drawIm_Callback(hObject,~)
-% hfig = getParentFigure(hObject);
-% h = guidata(hObject);
-%
-% % select ROI's to plot
-% h.n_topROIs = min(30,length(h.IX_ROI));
-% h = ChooseROIs_default(h,h.n_topROIs);
-%
-% % draw
-% h = refreshFigure(h);
-% guidata(hObject, h);
-% end
-
-% flagged
-function edit_ROIcount_Callback(hObject,~)
-str = get(hObject,'String');
-h = guidata(hObject);
-if ~isempty(str)
-    temp = textscan(str,'%d');% integer
-    h.n_topROIs = temp{:};
-else
-    h.n_topROIs = length(h.IX_ROI);
-end
-
-h = rank_by_skewness(h,h.n_topROIs);
-
-% draw
-h = refreshFigure(h);
-guidata(hObject, h);
 end
 
 function edit_selectROIrange_Callback(hObject,~)
@@ -364,30 +294,27 @@ h.rankID = rankID;
 
 switch rankID
     case 1
-%         sk = skewness(h.M, [], 2);        
-          sk = max(h.M, [], 2);      
-%         [~,IX_sort] = sort(sk,'ascend');
-        gIX = h.gIX;
-%         for i = 1:11
-%             g
-        numU = length(unique(gIX));
-        [gIX,~] = SortGroupIXbyScore(sk,1:length(gIX),numU,'descend');
-        
-%         gIX = IX_sort;%(1:topN);     
+        A = max(h.M, [], 2);
+%         [gIX,~] = SortGroupIXbyScore(sk,1:length(gIX),numU,'descend');
+        [~,IX_sort] = sort(A,'descend');
+        cIX = h.cIX(IX_sort);
+        gIX = (1:length(cIX))';
     case 2
         T = struct2table(h.dat.stat);
         h.M = zscore(h.dat.Fcell{1},0,2);
         h.skew = table2array(T(:,22));
         A = h.skew(h.cIX_abs,1);
         [~,IX_sort] = sort(A,'ascend');
-        gIX = IX_sort;%(1:topN); 
+        cIX = h.cIX(IX_sort);
+        gIX = (1:length(cIX))';
     case 3
         T = struct2table(h.dat.stat);
         h.M = zscore(h.dat.Fcell{1},0,2);
-        h.footprint = table2array(T(:,10));%footprint
-        A = h.footprint(h.cIX_abs,1);
-        [~,IX_sort] = sort(A,'ascend');
-        gIX = IX_sort;%(1:topN); 
+        npix = table2array(T(:,6));
+        A = npix(h.cIX_abs,1);
+        [~,IX_sort] = sort(A,'descend');
+        cIX = h.cIX(IX_sort);
+        gIX = (1:length(cIX))';
 end
 % if rankID>1
 %     setappdata(hfig,'rankscore',round(rankscore*100)/100);
@@ -396,9 +323,9 @@ end
 %     setappdata(hfig,'clrmap_name','hsv_new');
 % end
 
-h.clrmaptype = 'jet'; 
+h.vis.clrmaptype = 'jet';
 
-h = updateIndices(h,h.cIX,gIX);
+h = updateIndices(h,cIX,gIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
@@ -408,51 +335,66 @@ end
 
 %% ranking functions
 
-function h = rank_by_skewness(hObject,~)
-h = guidata(hObject);
-h.IX_ROI = h.absIX;
-%% rank traces
+% function h = rank_by_skewness(hObject,~)
+% h = guidata(hObject);
+% h.IX_ROI = h.absIX;
+% %% rank traces
+% 
+% % calculate skewness
+% sk = zeros(length(h.IX_ROI),1);
+% for i = 1:length(h.IX_ROI)
+%     ichosen = h.IX_ROI(i);
+%     F =  h.dat.Fcell{1}(ichosen, h.t_start:h.t_stop);
+%     Fneu = h.dat.FcellNeu{1}(ichosen, h.t_start:h.t_stop);
+%     
+%     
+%     % F(:, ops.badframes)  = F(:,    indNoNaN(ix));
+%     % Fneu(:, ops.badframes)  = Fneu(:, indNoNaN(ix));
+%     
+%     
+%     coefNeu = 0.7 * ones(1, size(F,1));
+%     
+%     dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
+%     
+%     % dF          = F - Fneu;
+%     
+%     %     sd           = std(dF, [], 2);
+%     %     sdN          = std(Fneu, [], 2);
+%     
+%     sk(i, 1) = skewness(dF, [], 2);
+% end
+% 
+% [~,IX_sort] = sort(sk,'ascend');
+% gIX = IX_sort(h.cIX_abs);
+% [gIX,numU] = SqueezeGroupIX(gIX);
+% 
+% h = updateIndices(h,h.cIX,gIX,numU);
+% refreshFigure(h);
+% guidata(hObject, h);
+% 
+% end
 
-% calculate skewness
-sk = zeros(length(h.IX_ROI),1);
-for i = 1:length(h.IX_ROI)
-    ichosen = h.IX_ROI(i);
-    F =  h.dat.Fcell{1}(ichosen, h.t_start:h.t_stop);
-    Fneu = h.dat.FcellNeu{1}(ichosen, h.t_start:h.t_stop);
-    
-    
-    % F(:, ops.badframes)  = F(:,    indNoNaN(ix));
-    % Fneu(:, ops.badframes)  = Fneu(:, indNoNaN(ix));
-    
-    
-    coefNeu = 0.7 * ones(1, size(F,1));
-    
-    dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
-    
-    % dF          = F - Fneu;
-    
-%     sd           = std(dF, [], 2);
-%     sdN          = std(Fneu, [], 2);
-    
-    sk(i, 1) = skewness(dF, [], 2);
-end
-
-[~,IX_sort] = sort(sk,'ascend');
-gIX = IX_sort(h.cIX_abs);
-[gIX,numU] = SqueezeGroupIX(gIX);
-
-h = updateIndices(h,h.cIX,gIX,numU);
-refreshFigure(h);
-guidata(hObject, h);
-
-end
-
-function pushbutton_sqeeze_Callback(hObject,~)
+function menu_sqeeze_Callback(hObject,~)
 h = guidata(hObject);
 [gIX, numU] = SqueezeGroupIX(h.gIX);
 h = updateIndices(h,h.cIX,gIX,numU);
 refreshFigure(h);
 guidata(hObject, h);
+end
+
+function popup_chooseclrmap_Callback(hObject,~)
+i_clr = get(hObject,'Value');
+h = guidata(hObject);
+if i_clr==1
+    h.vis.clrmaptype = 'hsv';
+elseif i_clr==2
+    h.vis.clrmaptype = 'rand';
+elseif i_clr==3
+    h.vis.clrmaptype = 'jet';
+elseif i_clr==4
+    h.vis.clrmaptype = 'hsv_old';
+end
+refreshFigure(h);
 end
 
 %% extra
@@ -462,5 +404,10 @@ h = guidata(hObject);
 if ~isempty(h) % empty at initial opening of GUI
     h = refreshFigure(h);
     guidata(hObject, h);
+    
+    pos = get(h.hfig,'Position');
+    fig_width = pos(3);
+    fig_height = pos(4);
+    set(h.gui.tgroup,'Position',[50,fig_height-80,fig_width-100,80]);
 end
 end

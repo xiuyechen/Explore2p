@@ -11,7 +11,23 @@ else
 end
 
 h_load = load(fullfile(filepath1, filename1));
-h.dat = h_load.dat;
+
+if isfield(h_load,'dat') % proc.mat
+    h.dat = h_load.dat;
+else
+    h.dat = h_load; % not proc...
+    
+    
+    %%
+    h.dat.maxmap = 2;
+    ops = h.dat.ops;
+    if isfield(ops, 'mimg1') && ~isempty(ops.mimg1)
+        h.dat.mimg(:,:,h.dat.maxmap) = ops.mimg1(ops.yrange, ops.xrange);
+        h.dat.mimg_proc(:,:,h.dat.maxmap) = normalize_image(h.dat.mimg(:,:,h.dat.maxmap));
+    end
+    h.dat.mimg(:,:,5) = 0;
+end
+
 
 %% init
 % h.hfig = getParentFigure(hObject);
@@ -25,16 +41,15 @@ h.t_start = 1;%2000;
 h.t_stop = size(h.M,2);%3000;
 
 % init cell selection to display
-h.cIX = (1:100)';%(1:length(h.IX_ROI))';%h.IX_ROI;
+h.cIX = (1:length(h.absIX))';
 h.gIX = (1:length(h.cIX))';
 h.cIX_abs = h.absIX(h.cIX);
 h.numK = max(h.gIX);
 
 
 %% app flags
-h.clrmaptype = 'hsv';
-h.flag.plotLines = 1;
-% h.clrmaptype = 'rand'; 
-%% draw
-h = refreshFigure(h);
+% h.vis.clrmaptype = 'hsv';
+h.ops.plotLines = 1;
+h.vis.clrmaptype = 'rand'; 
+
 end

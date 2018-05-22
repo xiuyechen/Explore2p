@@ -3,7 +3,7 @@ axis off
 cIX_abs = h.cIX_abs;
 gIX = h.gIX;
 
-switch h.flag.plotLines
+switch h.ops.plotLines
     case 0
         imagesc(h.M); 
         colormap(gray);
@@ -45,7 +45,7 @@ switch h.flag.plotLines
         y_n = y_n/(max(y_n)-min(y_n));
 
         %     if isempty(h.gIX)
-        clr = h.clrmap(igroup,:)*0.9;
+        clr = h.vis.clrmap(igroup,:)*0.9;
         %  clr_hsv = rgb2hsv(clr);
         %  clr = hsv2rgb(clr_hsv(1),clr_hsv(2),clr_hsv(3)*0.9);
         %        clr = squeeze(hsv2rgb(h.clrmap(igroup),1,0.8));
@@ -59,7 +59,8 @@ switch h.flag.plotLines
         plot(xv,y_n - pad*(ii-1),'color',clr);%[0.5,0.5,0.5])
         axis tight
         if isdrawtext
-            text(-1, 0.2- pad*(ii-1),num2str(ii),'HorizontalAlignment','right','color',[0.5,0.5,0.5]);
+            str = num2str(h.cIX(ii));
+            text(-1, 0.2- pad*(ii-1),str,'HorizontalAlignment','right','color',[0.5,0.5,0.5]);
         end
     end
     % % label: number of ROI's

@@ -19,7 +19,7 @@ if isempty(cIX)
 end
 
 %% update cache
-bC = h.backCache; 
+bC = h.gui.backCache; 
 
 cIX_last = h.cIX;
 gIX_last = h.gIX;
@@ -105,7 +105,7 @@ end
 %     setappdata(hfig,'opID',0);
 % end
 %%
-h.backCache = bC;
+h.gui.backCache = bC;
 
 
 [~,I] = sort(gIX);
