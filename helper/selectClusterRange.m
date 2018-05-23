@@ -1,4 +1,4 @@
-function [cIX,gIX,IX] = SelectClusterRange(cIX,gIX,range)
+function [cIX,gIX,IX] = selectClusterRange(cIX,gIX,range)
 % check dim
 if size(gIX,2)>1
     gIX = gIX';

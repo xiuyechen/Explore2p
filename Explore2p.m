@@ -55,8 +55,7 @@ h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
     'Checked','on',...
     'Callback',@menu_plotlines_Callback);
 
-h.gui.plotLines = uimenu(hm_vis,'Label','Sqeeze colors',...
-    'Checked','on',...
+h.gui.plotLines = uimenu(hm_vis,'Label','Sqeeze colors',...    
     'Callback',@menu_sqeeze_Callback);
 
 %% Create UI controls
@@ -276,7 +275,7 @@ str = get(hObject,'String');
 if ~isempty(str)
     str = strrep(str,'end',num2str(max(h.gIX)));
     range = parseRange(str);
-    [cIX,gIX] = SelectClusterRange(h.cIX,h.gIX,range);
+    [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
     h = updateIndices(h,cIX,gIX);
     refreshFigure(h);
     guidata(hObject, h);
@@ -376,7 +375,7 @@ end
 
 function menu_sqeeze_Callback(hObject,~)
 h = guidata(hObject);
-[gIX, numU] = SqueezeGroupIX(h.gIX);
+[gIX, numU] = squeezeGroupIX(h.gIX);
 h = updateIndices(h,h.cIX,gIX,numU);
 refreshFigure(h);
 guidata(hObject, h);
