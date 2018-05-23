@@ -18,7 +18,7 @@ classdef ImageClass % h.im = ImageClass
         behavior
     end
     properties (Constant)
-        dat = loadProcMat; % flag % load from suite2p output (procmat)
+        dat = []; %loadProcMat; % flag % load from suite2p output (procmat)
     end
     properties (Dependent, Hidden)
         % for renaming purposes
@@ -34,12 +34,10 @@ classdef ImageClass % h.im = ImageClass
 %         clrmap % colormap
         
         % properties only used in gui (e.g. gui element handles not recorded here)
-        gui = struct('backCache',[],... % init in gui
-            'fwCache',[]... % init in gui
-            ); % 
+        gui = struct;
         
         % gui options
-        ops = struct('plotLines','1'); % struct, not editable
+        ops = struct; % struct, not editable
         
         % testing new properties here
         vis = struct('clrmaptype','rand'...
@@ -48,9 +46,27 @@ classdef ImageClass % h.im = ImageClass
     
     methods
         %% constructor % load
-        %         function h = ImageData(hdat)
-        %             h.Traces = hdat.Fcell;
-        %         end
+        function h = ImageClass()
+            
+            %% gui % init in GUI?
+            h.gui.backCache = [];
+            h.gui.fwCache = [];
+%             % GUI cache
+            % bCache = [];
+            % fCache = [];
+            % bCache.cIX = cell(1,1);
+            % bCache.gIX = cell(1,1);
+            % bCache.numK = cell(1,1);
+            % fCache.cIX = cell(1,1);
+            % fCache.gIX = cell(1,1);
+            % fCache.numK = cell(1,1);
+            % h.gui.backCache = bCache;
+            % h.gui.fwCache = fCache;
+            
+            %% ops
+            h.ops.plotLines = 1;
+            h.ops.haveFrameInfo = 0;
+        end
         %% property get/set methods
         %         function h = set.clrmap(h,val)
         %             h.clrmap = val;

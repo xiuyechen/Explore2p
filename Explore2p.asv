@@ -88,7 +88,7 @@ i_tab = 1;
 % edit_selectROIrange_Callback
 i=1;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Cell/ROI range',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','ROI range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -131,7 +131,7 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
 % popup_chooseStimCode_Callback
 i=i+n;n=3; 
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Stim Code',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 menu = {'(choose)','A','B','C','D','Grey'};
@@ -326,8 +326,7 @@ switch rankID
     case 4 % 'stim reg'
 %         h.M = zscore(h.dat.Fcell{1},0,2);
         t = h.timeInfo;
-        
-        % get chosen stim type
+        % choose st
         ii = h.ops.i_stim; 
         disp(t.stimCodeNameArray{ii});        
         
@@ -340,17 +339,17 @@ switch rankID
             allIx = [allIx IX(ii).ix]; %#ok<AGROW>
         end
         IX = allIx;
+
         reg(IX) = 1;
         coeff = corr(reg,h.M');
         
-        % sort by regression result
-        [coeff_sorted,IX_sort] = sort(coeff,'descend');
+        [~,IX_sort] = sort(coeff,'descend');
         cIX = h.cIX(IX_sort);
         gIX = (1:length(cIX))';
         
         % output...
         h.coeff = coeff;
-        disp(['top 5 coeff: ',num2str(coeff_sorted(1:5))]);  
+        disp(t.stimCodeNameArray{ii});  
 end
 % if rankID>1
 %     setappdata(hfig,'rankscore',round(rankscore*100)/100);
@@ -435,7 +434,7 @@ end
 
 function popup_chooseStimCode_Callback(hObject,~)
 h = guidata(hObject);
-h.ops.i_stim = get(hObject,'Value')-1;
+h.ops.i_stim = get(hObject,'Value');
 guidata(hObject, h);
 end
 

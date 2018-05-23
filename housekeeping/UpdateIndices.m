@@ -107,7 +107,7 @@ end
 %%
 h.gui.backCache = bC;
 
-
+% sort based on gIX
 [~,I] = sort(gIX);
 h.cIX = cIX(I);
 h.gIX = gIX(I);
@@ -120,6 +120,7 @@ h.cIX_abs = h.absIX(h.cIX);
 % M = GetTimeIndexedData(hfig);
 % setappdata(hfig,'M',M);
 h = getFuncData(h);
+% h = updateTimeIndexedData(h);
 
 if exist('numK','var')
     h.numK = double(numK);
