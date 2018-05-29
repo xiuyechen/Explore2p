@@ -1,6 +1,14 @@
 % frequently used, updates cell-index,group-index,cluster-number. set-operations included in here.
 function h = updateIndices(h,cIX,gIX,numK)
-% h = guidata(hObject);
+% toggle on/off: whether to cache tIX changes
+% if h.ops.isCacheTimeIX
+%     tIX_last = h.gui.tIX_last;
+% else
+%     tIX = h.tIX;
+% end
+
+
+%% 
 if ~exist('gIX','var')
     gIX = h.gIX;
 end

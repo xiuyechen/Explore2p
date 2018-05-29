@@ -109,7 +109,7 @@ classdef ImageClass % h = ImageClass
             % not recording gui element handles here
             
             % gui flags for gui vis
-            gui.rankID = 0; % TBD
+            gui.rankID =  % TBD
             
             h.gui = gui;
         end

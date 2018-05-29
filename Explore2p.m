@@ -1,7 +1,16 @@
 function h = Explore2p(varargin)
-% testing phase: init load demo data
+% EXPLORE2P
+% GUI to explore functional imaging data (e.g. from Two-Photon '2P' microscopy)
+% To use, directly load preproceesed imaging data in Suite2p output format (https://github.com/cortex-lab/Suite2P), 
+% along with (optional) experimental recordings of stimulus/behavior. 
+
+%% convenience flag for testing phase: init load demo data
 global isTesting;
 isTesting = true;
+
+%% init
+h = ImageClass(); % code to construct/init infrastructure in here 
+%(see custom ImageClass specifically designed for this gui)
 
 %% Make figure
 scrn = get(0,'Screensize');
@@ -13,21 +22,7 @@ hfig = figure('Position',[scrn(3)*0.2, scrn(4)*0.05, fig_width, fig_height],...%
     'ResizeFcn',@resizeMainFig_callback); %
 hold off; axis off
 
-%% init
-h = [];
 h.hfig = hfig;
-
-% GUI cache
-bCache = [];
-fCache = [];
-bCache.cIX = cell(1,1);
-bCache.gIX = cell(1,1);
-bCache.numK = cell(1,1);
-fCache.cIX = cell(1,1);
-fCache.gIX = cell(1,1);
-fCache.numK = cell(1,1);
-h.gui.backCache = bCache;
-h.gui.fwCache = fCache;
 
 %% Make menu
 % 1. File
@@ -48,6 +43,11 @@ h.gui.back = uimenu(hm_edit,'Label','Back',...
 h.gui.forward = uimenu(hm_edit,'Label','Forward',...
     'Callback',@forward_Callback);
 
+
+h.gui.isStimAvr = uimenu(hm_edit,'Label','Trace avg.',...
+    'Checked','off',...
+    'Callback',@menu_traceAvg_Callback);
+
 % 3. Visuals
 hm_vis = uimenu(hfig,'Label','Visuals');
 
@@ -58,7 +58,7 @@ h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
     'Checked','on',...
     'Callback',@menu_plotlines_Callback);
 
-h.gui.plotLines = uimenu(hm_vis,'Label','Sqeeze colors',...    
+h.gui.sqeezeColors = uimenu(hm_vis,'Label','Sqeeze colors',...    
     'Callback',@menu_sqeeze_Callback);
 
 %% Create UI controls
@@ -240,6 +240,14 @@ end
 guidata(hObject, h);
 end
 
+function menu_traceAvg_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.isStimAvr,'isStimAvr');
+h = updateIndices(h);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
 
 %% 3.1
 function menu_refresh_Callback(hObject,~)
@@ -255,7 +263,7 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
-function h = toggleMenu(h,menu_handle,flag_string)
+function h = toggleMenu(h,menu_handle,flag_string) % h.ops flags only
 % toggle
 currentflag = get(h.gui.plotLines,'Checked');
 if strcmp(currentflag,'off')
@@ -301,7 +309,7 @@ if rankID==0
     return;
 end
 h = guidata(hObject);
-h.rankID = rankID;
+h.gui.rankID = rankID;
 
 switch rankID
     case 1 % 'max value'
@@ -349,7 +357,7 @@ switch rankID
         gIX = (1:length(cIX))';
         
         % output...
-        h.coeff = coeff;
+        h.temp.coeff = coeff;
         disp(['top 5 coeff: ',num2str(coeff_sorted(1:5))]);  
 end
 % if rankID>1
@@ -431,6 +439,7 @@ elseif i_clr==4
     h.vis.clrmaptype = 'hsv_old';
 end
 refreshFigure(h);
+guidata(hObject, h);
 end
 
 function popup_chooseStimCode_Callback(hObject,~)

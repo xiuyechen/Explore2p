@@ -1,8 +1,13 @@
-function [M_0,M,behavior,stim] = updateTimeIndex(hfig,isSkipcIX) %#ok<INUSD>
-% input params
+function [M_0,M,behavior,stim] = setTimeIndex(hfig,isSkipcIX) %#ok<INUSD>
+% when relevant gui ops are updated, this function computes the new tIX, 
+% and updates all variables that depend on tIX (M_0 and M, beahvior and stim)
+% (tIX is set but not publicly accessed)
 
-% blocks
-% stim ID
+%% input params
+
+isStimAvr = h.gui.isStimAvr;
+% expt blocks (sessions)
+% stim ID (block type)
 
 % isStimAvr = getappdata(hfig,'isStimAvr');
 % isRawtime = getappdata(hfig,'isRawtime');
@@ -12,6 +17,7 @@ timelists = getappdata(hfig,'timelists');
 periods = getappdata(hfig,'periods');
 fishset = getappdata(hfig,'fishset');
 
+%% set tIX
 if fishset == 1,
     if isStimAvr,
         tIX = 1:periods;
@@ -36,23 +42,21 @@ else % fishset>1,
         end
     end
 end
-
 setappdata(hfig,'tIX',tIX);
 
-% set Matrices to hold time-series
+%% set M_0
 [M_0,behavior,stim] = GetTimeIndexedData(hfig,'isAllCells');
 setappdata(hfig,'M_0',M_0);
-if ~exist('isSkipcIX','var'),
-    cIX = getappdata(hfig,'cIX');
-    if ~isempty(M_0)
-        M = M_0(cIX,:);
-    else
-        M = [];
-    end
-    setappdata(hfig,'M',M);
+
+%% set M
+cIX = getappdata(hfig,'cIX');
+if ~isempty(M_0)
+    M = M_0(cIX,:);
 else
-    M = M_0;
+    M = [];
 end
+setappdata(hfig,'M',M);
+
 
 % %% set stimulus regressors
 % stim = getappdata(hfig,'stim');

@@ -14,20 +14,8 @@ hfig = figure('Position',[scrn(3)*0.2, scrn(4)*0.05, fig_width, fig_height],...%
 hold off; axis off
 
 %% init
-h = [];
+h = ImageClass(); % code to construct/init infrastructure in here (see custom  class ImageClass)
 h.hfig = hfig;
-
-% GUI cache
-bCache = [];
-fCache = [];
-bCache.cIX = cell(1,1);
-bCache.gIX = cell(1,1);
-bCache.numK = cell(1,1);
-fCache.cIX = cell(1,1);
-fCache.gIX = cell(1,1);
-fCache.numK = cell(1,1);
-h.gui.backCache = bCache;
-h.gui.fwCache = fCache;
 
 %% Make menu
 % 1. File
@@ -47,6 +35,11 @@ h.gui.back = uimenu(hm_edit,'Label','Back',...
 
 h.gui.forward = uimenu(hm_edit,'Label','Forward',...
     'Callback',@forward_Callback);
+
+
+h.gui.plotLines = uimenu(hm_edit,'Label','Trace avg.',...
+    'Checked','off',...
+    'Callback',@menu_traceAvg_Callback);
 
 % 3. Visuals
 hm_vis = uimenu(hfig,'Label','Visuals');
@@ -88,7 +81,7 @@ i_tab = 1;
 % edit_selectROIrange_Callback
 i=1;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','ROI range',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cell/ROI range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -131,7 +124,7 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
 % popup_chooseStimCode_Callback
 i=i+n;n=3; 
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Stim Code',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 menu = {'(choose)','A','B','C','D','Grey'};
@@ -240,6 +233,14 @@ end
 guidata(hObject, h);
 end
 
+function menu_traceAvg_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.isStimAvr,'isStimAvr');
+h = updateIndices(h);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
 
 %% 3.1
 function menu_refresh_Callback(hObject,~)
@@ -326,7 +327,8 @@ switch rankID
     case 4 % 'stim reg'
 %         h.M = zscore(h.dat.Fcell{1},0,2);
         t = h.timeInfo;
-        % choose st
+        
+        % get chosen stim type
         ii = h.ops.i_stim; 
         disp(t.stimCodeNameArray{ii});        
         
@@ -339,17 +341,17 @@ switch rankID
             allIx = [allIx IX(ii).ix]; %#ok<AGROW>
         end
         IX = allIx;
-
         reg(IX) = 1;
         coeff = corr(reg,h.M');
         
-        [~,IX_sort] = sort(coeff,'descend');
+        % sort by regression result
+        [coeff_sorted,IX_sort] = sort(coeff,'descend');
         cIX = h.cIX(IX_sort);
         gIX = (1:length(cIX))';
         
         % output...
-        h.coeff = coeff;
-        disp(t.stimCodeNameArray{ii});  
+        h.temp.coeff = coeff;
+        disp(['top 5 coeff: ',num2str(coeff_sorted(1:5))]);  
 end
 % if rankID>1
 %     setappdata(hfig,'rankscore',round(rankscore*100)/100);
@@ -434,7 +436,7 @@ end
 
 function popup_chooseStimCode_Callback(hObject,~)
 h = guidata(hObject);
-h.ops.i_stim = get(hObject,'Value');
+h.ops.i_stim = get(hObject,'Value')-1;
 guidata(hObject, h);
 end
 
