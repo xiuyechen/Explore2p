@@ -15,7 +15,8 @@ switch h.ops.plotLines
     pad = 1;
     
     Fs = 15.3;            % Sampling frequency
-    xv = (1:h.t_stop-h.t_start+1)/Fs;
+xv = (1:length(h.tIX))/Fs;
+%     xv = (1:h.tIX(end)-h.tIX(1)+1)/Fs;
     isdrawtext = length(cIX_abs)<50;
     
 %     [~,ix_sort] = sort(gIX,'ascend');

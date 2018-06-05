@@ -94,15 +94,19 @@ classdef ImageClass % h = ImageClass
             
             %% gui % init in GUI?
             gui = [];
+            
             % GUI cache
             bCache = [];
             fCache = [];
             bCache.cIX = cell(1,1);
             bCache.gIX = cell(1,1);
             bCache.numK = cell(1,1);
+            bCache.tIX = cell(1,1);
+            
             fCache.cIX = cell(1,1);
             fCache.gIX = cell(1,1);
             fCache.numK = cell(1,1);
+            fCache.tIX = cell(1,1);
             gui.backCache = bCache;
             gui.fwCache = fCache;
 

@@ -1,5 +1,5 @@
 % frequently used, updates cell-index,group-index,cluster-number. set-operations included in here.
-function h = updateIndices(h,cIX,gIX,numK)
+function h = updateIndices(h,cIX,gIX,numK,tIX)
 % toggle on/off: whether to cache tIX changes
 % if h.ops.isCacheTimeIX
 %     tIX_last = h.gui.tIX_last;
@@ -9,15 +9,17 @@ function h = updateIndices(h,cIX,gIX,numK)
 
 
 %% 
-if ~exist('gIX','var')
-    gIX = h.gIX;
-end
 if ~exist('cIX','var')
     cIX = h.cIX;
 end
-
+if ~exist('gIX','var')
+    gIX = h.gIX;
+end
 if ~exist('numK','var')
     numK = h.numK;
+end
+if ~exist('tIX','var')
+    tIX = h.tIX;
 end
 
 if isempty(cIX)
@@ -32,15 +34,19 @@ bC = h.gui.backCache;
 cIX_last = h.cIX;
 gIX_last = h.gIX;
 numK_last = h.numK;
-if ~(isequal(cIX_last,cIX) && isequal(gIX_last,gIX) && isequal(numK_last,numK))
+tIX_last = h.tIX;
+if ~(isequal(cIX_last,cIX) && isequal(gIX_last,gIX) && isequal(numK_last,numK) && isequal(tIX_last,tIX))
     bC.cIX = [cIX_last,bC.cIX];
     bC.gIX = [gIX_last,bC.gIX];
     bC.numK = [h.numK,bC.numK];
+    bC.tIX = [tIX_last,bC.tIX];
+    
     set(h.gui.back,'enable','on');
     if length(bC.cIX)>20
         bC.cIX(end) = [];
         bC.gIX(end) = [];
         bC.numK(end) = [];
+        bC.tIX(end) = [];
     end
 end
  
@@ -121,14 +127,14 @@ h.cIX = cIX(I);
 h.gIX = gIX(I);
 h.cIX_abs = h.absIX(h.cIX);
 
-% h.cIX = cIX;
-% h.gIX = gIX;
-
-% flag
+h.tIX = tIX;
+% h = getFuncData(h); % 6/4/18
+%%
 % M = GetTimeIndexedData(hfig);
 % setappdata(hfig,'M',M);
-h = getFuncData(h);
+
 % h = updateTimeIndexedData(h);
+h = getIndexedData(h);
 
 if exist('numK','var')
     h.numK = double(numK);

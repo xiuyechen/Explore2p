@@ -111,6 +111,16 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_selectClusterRange_Callback});
 
+% edit_manualtIXRange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','frame range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_manualtIXRange_Callback});
+
 % popup_ranking_Callback
 i=i+n;n=3; 
 i_row = 1;
@@ -187,18 +197,21 @@ if ~isempty(bC.cIX{1})
     fC.cIX = [h.cIX,fC.cIX];
     fC.gIX = [h.gIX,fC.gIX];
     fC.numK = [h.numK,fC.numK];
+    fC.tIX = [h.tIX,fC.tIX];
     % retrieve
     h.cIX = bC.cIX{1};
     h.gIX = bC.gIX{1};
     h.numK = bC.numK{1};
+    h.tIX = bC.tIX{1};
     bC.cIX(1) = [];
     bC.gIX(1) = [];
     bC.numK(1) = [];
+    bC.tIX(1) = [];
     
     h.gui.backCache = bC;
     h.gui.fwCache = fC;    
     h.cIX_abs = h.absIX(h.cIX);
-    h = getFuncData(h);
+    h = getIndexedData(h);
     
     % finish
     disp('back (from cache)')
@@ -221,13 +234,16 @@ if ~isempty(fC.cIX{1})
     bC.cIX = [h.cIX,bC.cIX];
     bC.gIX = [h.gIX,bC.gIX];
     bC.numK = [h.numK,bC.numK];
+    bC.tIX = [h.tIX,bC.tIX];
     % retrieve
     h.cIX = fC.cIX{1};
     h.gIX = fC.gIX{1};
     h.numK = fC.numK{1};
+    h.tIX = fC.tIX{1};
     fC.cIX(1) = [];
     fC.gIX(1) = [];
     fC.numK(1) = [];
+    fC.tIX(1) = [];
     
     h.gui.backCache = bC;
     h.gui.fwCache = fC;
@@ -235,7 +251,7 @@ if ~isempty(fC.cIX{1})
     %     setappdata(hfig,'rankID',0);
 
     h.cIX_abs = h.absIX(h.cIX);
-    h = getFuncData(h);
+    h = getIndexedData(h);
     
     % finish
     disp('forward (from cache)')
@@ -312,6 +328,20 @@ if ~isempty(str)
     range = parseRange(str);
     [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
     h = updateIndices(h,cIX,gIX);
+    refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
+function edit_manualtIXRange_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    str = strrep(str,'end',num2str(max(h.gIX)));
+    range = parseRange(str);
+    tIX = range;
+    h = updateIndices(h,h.cIX,h.gIX,h.numK,tIX);
     refreshFigure(h);
     guidata(hObject, h);
 end

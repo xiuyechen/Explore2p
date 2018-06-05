@@ -5,6 +5,10 @@ disp('loading proc data');
 % h.vis.clrmaptype = 'hsv';
 h.ops.plotLines = 1;
 h.ops.haveFrameInfo = 0;
+
+h.ops.isZscore = 1;
+
+
 h.vis.clrmaptype = 'rand'; 
 
 %% load data
@@ -51,8 +55,9 @@ h.absIX = find(h.IsCell);
 
 % time points
 h = parseFrameInfo(h,frameInfo);
-h.t_start = 1;%2000;
-h.t_stop = h.timeInfo.nFrames;%3000;
+% h.t_start = 1;%2000;
+% h.t_stop = h.timeInfo.nFrames;%3000;
+tIX = 1:h.timeInfo.nFrames;
 
 % init cell selection to display
 cIX = (1:length(h.absIX))';
@@ -63,6 +68,7 @@ numK = max(gIX);
 h.cIX = cIX;
 h.gIX = gIX;
 h.numK = numK;
-h = updateIndices(h,cIX,gIX,numK);
+h.tIX = tIX;
+h = updateIndices(h,cIX,gIX,numK,tIX);
 
 end
