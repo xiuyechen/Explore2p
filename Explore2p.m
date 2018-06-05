@@ -29,19 +29,19 @@ h.hfig = hfig;
 hm_file = uimenu(hfig,'Label','File');
 
 uimenu(hm_file,'Label','Load...',...
-    'Callback',@loadmat_Callback);
+    'Callback',@menu_loadmat_Callback);
 
 uimenu(hm_file,'Label','Export to workspace',...
-    'Callback',@export_Callback);
+    'Callback',@menu_export_workspace_Callback);
 
 % 2. Edit
 hm_edit = uimenu(hfig,'Label','Edit');
 
 h.gui.back = uimenu(hm_edit,'Label','Back',...
-    'Callback',@back_Callback);
+    'Callback',@menu_back_Callback);
 
 h.gui.forward = uimenu(hm_edit,'Label','Forward',...
-    'Callback',@forward_Callback);
+    'Callback',@menu_forward_Callback);
 
 
 h.gui.isStimAvr = uimenu(hm_edit,'Label','Trace avg.',...
@@ -60,6 +60,11 @@ h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
 
 h.gui.sqeezeColors = uimenu(hm_vis,'Label','Sqeeze colors',...    
     'Callback',@menu_sqeeze_Callback);
+
+% 4. Help
+hm_help = uimenu(hfig,'Label','Help');
+h.gui.help = uimenu(hm_help,'Label','Getting Started',...
+    'Callback',@menu_help_Callback);
 
 %% Create UI controls
 set(gcf,'DefaultUicontrolUnits','pixels');
@@ -89,7 +94,8 @@ i_tab = 1;
 i=1;n=3;
 i_row = 1;
 uicontrol('Parent',tab{i_tab},'Style','text','String','Cell/ROI range',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in range to display, e.g. ''1,2,5'',''2:4'',''6:end''');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
@@ -132,7 +138,8 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
 i=i+n;n=3; 
 i_row = 1;
 uicontrol('Parent',tab{i_tab},'Style','text','String','Stim Code',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','These are the individual stimulus sequence elements. Select stimulus for regression under ''Rank Cells''\''stim reg''');
 i_row = 2;
 menu = {'(choose)','A','B','C','D','Grey'};
 uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
@@ -155,7 +162,7 @@ end
 %% Callback functions
 
 % 1.1
-function loadmat_Callback(hObject,~)
+function menu_loadmat_Callback(hObject,~)
 h = guidata(hObject);
 h = loadSessionData(h);
 guidata(hObject, h);
@@ -164,13 +171,13 @@ refreshFigure(h);
 end
 
 % 1.2
-function export_Callback(hObject,~)
+function menu_export_workspace_Callback(hObject,~)
 h = guidata(hObject);
 assignin('base', 'h', h);
 end
 
 % 2.1
-function back_Callback(hObject,~)
+function menu_back_Callback(hObject,~)
 h = guidata(hObject);
 bC = h.gui.backCache;
 fC = h.gui.fwCache;
@@ -204,7 +211,7 @@ guidata(hObject, h);
 end
 
 % 2.2
-function forward_Callback(hObject,~)
+function menu_forward_Callback(hObject,~)
 h = guidata(hObject);
 bC = h.gui.backCache;
 fC = h.gui.fwCache;
@@ -249,7 +256,7 @@ guidata(hObject, h);
 end
 
 
-%% 3.1
+%% 3.1 Menu: visuals
 function menu_refresh_Callback(hObject,~)
 h = guidata(hObject);
 h = refreshFigure(h);
@@ -263,6 +270,13 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
+%% 4. Menu: help
+function menu_help_Callback(hObject,~)
+msg = 'see README on https://github.com/xiuyechen/Explore2p';
+helpdlg(msg);
+end
+
+%%
 function h = toggleMenu(h,menu_handle,flag_string) % h.ops flags only
 % toggle
 currentflag = get(h.gui.plotLines,'Checked');
