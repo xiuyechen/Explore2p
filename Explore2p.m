@@ -44,7 +44,7 @@ h.gui.forward = uimenu(hm_edit,'Label','Forward',...
     'Callback',@menu_forward_Callback);
 
 
-h.gui.isStimAvr = uimenu(hm_edit,'Label','Trace avg.',...
+h.gui.isStimAvg = uimenu(hm_edit,'Label','Trace avg.',...
     'Checked','off',...
     'Callback',@menu_traceAvg_Callback);
 
@@ -85,7 +85,7 @@ yrow = 1.5*rheight:-rheight:-0.5*rheight;
 dTextHt = 0; % dTextHt = manual adjustment for 'text' controls:
 % (vertical alignment is top instead of center like for all other controls)
 bwidth = 30;
-grid = 5:bwidth+5:20*bwidth;
+grid = 5:bwidth+5:40*bwidth;
 
 %% UI tab 1: General
 i_tab = 1;
@@ -101,15 +101,15 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_selectROIrange_Callback});
 
-% edit_selectClusterRange_Callback
-i=i+n;n=3;
-i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
-i_row = 2;
-uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
-    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-    'Callback',{@edit_selectClusterRange_Callback});
+% % edit_selectClusterRange_Callback
+% i=i+n;n=3;
+% i_row = 1;
+% uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
+%     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+% i_row = 2;
+% uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+%     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+%     'Callback',{@edit_selectClusterRange_Callback});
 
 % edit_manualtIXRange_Callback
 i=i+n;n=3;
@@ -120,6 +120,26 @@ i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_manualtIXRange_Callback});
+
+% edit_stimElmRange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Element range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_stimElmRange_Callback});
+
+% edit_blockRange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Block range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_blockRange_Callback});
 
 % popup_ranking_Callback
 i=i+n;n=3; 
@@ -265,8 +285,9 @@ end
 
 function menu_traceAvg_Callback(hObject,~)
 h = guidata(hObject);
-h = toggleMenu(h,h.gui.isStimAvr,'isStimAvr');
-h = updateIndices(h);
+h = toggleMenu(h,h.gui.isStimAvg,'isStimAvg');
+tIX = getTimeIndex(h);
+h = updateIndices(h,tIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
@@ -287,7 +308,7 @@ guidata(hObject, h);
 end
 
 %% 4. Menu: help
-function menu_help_Callback(hObject,~)
+function menu_help_Callback(~,~)
 msg = 'see README on https://github.com/xiuyechen/Explore2p';
 helpdlg(msg);
 end
@@ -295,7 +316,7 @@ end
 %%
 function h = toggleMenu(h,menu_handle,flag_string) % h.ops flags only
 % toggle
-currentflag = get(h.gui.plotLines,'Checked');
+currentflag = get(menu_handle,'Checked');
 if strcmp(currentflag,'off')
     set(menu_handle,'Checked','on');
     h.ops = setfield(h.ops,flag_string,1);
@@ -319,29 +340,59 @@ if ~isempty(str)
 end
 end
 
-function edit_selectClusterRange_Callback(hObject,~)
-h = guidata(hObject);
-% get/format range
-str = get(hObject,'String');
-if ~isempty(str)
-    str = strrep(str,'end',num2str(max(h.gIX)));
-    range = parseRange(str);
-    [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
-    h = updateIndices(h,cIX,gIX);
-    refreshFigure(h);
-    guidata(hObject, h);
-end
-end
+% function edit_selectClusterRange_Callback(hObject,~)
+% h = guidata(hObject);
+% % get/format range
+% str = get(hObject,'String');
+% if ~isempty(str)
+%     str = strrep(str,'end',num2str(max(h.gIX)));
+%     range = parseRange(str);
+%     [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
+%     h = updateIndices(h,cIX,gIX);
+%     refreshFigure(h);
+%     guidata(hObject, h);
+% end
+% end
 
 function edit_manualtIXRange_Callback(hObject,~)
 h = guidata(hObject);
 % get/format range
 str = get(hObject,'String');
 if ~isempty(str)
-    str = strrep(str,'end',num2str(max(h.gIX)));
+    str = strrep(str,'end',num2str(h.timeInfo.nFrames));
     range = parseRange(str);
-    tIX = range;
-    h = updateIndices(h,h.cIX,h.gIX,h.numK,tIX);
+    tIX = range';
+    h = updateIndices(h,tIX);
+    refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
+function edit_stimElmRange_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    str = strrep(str,'end',num2str(h.timeInfo.nElm));
+    range = parseRange(str);
+    h.ops.rangeElm = range';
+    tIX = getTimeIndex(h);
+    h = updateIndices(h,tIX);    
+    refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
+function edit_blockRange_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    str = strrep(str,'end',num2str(h.timeInfo.nBlocks));
+    range = parseRange(str);
+    h.ops.rangeBlocks = range';
+    tIX = getTimeIndex(h);
+    h = updateIndices(h,tIX);    
     refreshFigure(h);
     guidata(hObject, h);
 end
@@ -380,19 +431,29 @@ switch rankID
         t = h.timeInfo;
         
         % get chosen stim type
-        ii = h.ops.i_stim; 
-        disp(t.stimCodeNameArray{ii});        
+        disp(t.stimCodeNameArray{h.ops.i_stim});        
         
         % regression 
-        reg = zeros(t.nFrames,1);
-        IX = t.stimChunks(ii).ix;
+        %% [better way to make reg.... to-do]
+        reg_raw = zeros(t.nFrames,1);
+        IX = t.stimChunks(h.ops.i_stim).ix;
         % collapse
         allIx = [];
-        for ii=1:length(IX)
+        for ii = 1:length(IX)
             allIx = [allIx IX(ii).ix]; %#ok<AGROW>
         end
         IX = allIx;
-        reg(IX) = 1;
+        reg_raw(IX) = 1;
+        if h.ops.isStimAvg
+            IX = [];
+            for ii = h.ops.rangeElm
+                IX = horzcat(IX,t.stimmat{ii}(1,:)); %#ok<AGROW>
+            end            
+            reg = reg_raw(IX);
+        else
+            reg = reg_raw(h.tIX);
+        end
+        %%
         coeff = corr(reg,h.M');
         
         % sort by regression result

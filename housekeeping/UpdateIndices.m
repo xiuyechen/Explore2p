@@ -1,5 +1,27 @@
+
+function h = updateIndices(h,arg1,arg2,arg3,arg4)
 % frequently used, updates cell-index,group-index,cluster-number. set-operations included in here.
-function h = updateIndices(h,cIX,gIX,numK,tIX)
+% updateIndices(h,cIX,gIX,numK,tIX)
+% updateIndices(h,cIX,gIX,numK)
+% updateIndices(h,cIX,gIX)
+% updateIndices(h,tIX)
+
+if nargin == 2
+    tIX = arg1;
+elseif nargin == 3
+    cIX = arg1;
+    gIX = arg2;
+elseif nargin == 4
+    cIX = arg1;
+    gIX = arg2;
+    numK = arg3;
+elseif nargin == 5
+    cIX = arg1;
+    gIX = arg2;
+    numK = arg3;
+    tIX = arg4;
+end
+
 % toggle on/off: whether to cache tIX changes
 % if h.ops.isCacheTimeIX
 %     tIX_last = h.gui.tIX_last;
@@ -7,9 +29,8 @@ function h = updateIndices(h,cIX,gIX,numK,tIX)
 %     tIX = h.tIX;
 % end
 
-
 %% 
-if ~exist('cIX','var')
+if ~exist('cIX','var') || isempty(cIX)
     cIX = h.cIX;
 end
 if ~exist('gIX','var')
@@ -127,6 +148,9 @@ h.cIX = cIX(I);
 h.gIX = gIX(I);
 h.cIX_abs = h.absIX(h.cIX);
 
+% only M depends on cIX change... 
+% whereas a tIX change requires more updates
+
 h.tIX = tIX;
 % h = getFuncData(h); % 6/4/18
 %%
@@ -134,7 +158,7 @@ h.tIX = tIX;
 % setappdata(hfig,'M',M);
 
 % h = updateTimeIndexedData(h);
-h = getIndexedData(h);
+h = getIndexedData(h); % updates variables depending on tIX (M_0,M,behavior,stim)
 
 if exist('numK','var')
     h.numK = double(numK);

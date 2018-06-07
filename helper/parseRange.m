@@ -1,4 +1,5 @@
 function range = parseRange(str)
+% output: vertical 1-D array
 str = strrep(str,':','-'); % e.g. str= '1,3,5:8';
 C = textscan(str,'%d','delimiter',{',',';'});
 m = C{:};

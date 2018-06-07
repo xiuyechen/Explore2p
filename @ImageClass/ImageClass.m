@@ -38,20 +38,16 @@ classdef ImageClass % h = ImageClass
         % load data
         dat = []; %loadProcMat; % flag % load from suite2p output (procmat)
         timeInfo        
-        
-        % temporary!
-        t_start
-        t_stop
-        
+
         % core properties, for slicing
-        tIX % time index array
-        cIX % cell index array, or 'chosen' 
+        tIX % time index array, 1xn
+        cIX % cell index array, or 'chosen'; nx1
         
         absIX % ROI index array ('absolute index', does not change with curation)
         cIX_abs % absIX corresponding to the current selection of cIX 
         
         % operations and display
-        gIX % grouping index array, for clustering/color display
+        gIX % grouping index array, for clustering/color display % same size as cIX
         numK % number of groups/colors, corresponding to colormap
 %         clrmap % colormap
                 
@@ -65,6 +61,8 @@ classdef ImageClass % h = ImageClass
         %% these should be private set
         M % dynamically sliced calcium traces, depends on cIX and tIX
         M_0 % depends on tIX
+        
+        % TBD
         stim % depends on tIX
         behavior % depends on tIX
         
@@ -88,7 +86,9 @@ classdef ImageClass % h = ImageClass
             % data loading
             ops.haveFrameInfo = 0;
             % functional format
-            ops.isStimAvr = 0;
+            ops.isStimAvg = 0;
+            ops.rangeBlocks = [];
+            ops.rangeElm = [];
             
             h.ops = ops;
             
