@@ -7,6 +7,6 @@ outstanding issues:
 
 - ratio of axes is relative to fig size while tabgroup is fixed
 
-- labeling of ROI's not on func plot?
+- Sampling frequency hardcoded in drawTraces
 
-}%
+%}

@@ -4,7 +4,8 @@ function h = Explore2p(varargin)
 % To use, directly load preproceesed imaging data in Suite2p output format (https://github.com/cortex-lab/Suite2P), 
 % along with (optional) experimental recordings of stimulus/behavior. 
 
-%% convenience flag for testing phase: init load demo data
+%% testing
+% convenience flag for testing phase: init load demo data
 global isTesting;
 isTesting = true;
 
@@ -24,8 +25,7 @@ hold off; axis off
 
 h.hfig = hfig;
 
-%% Make menu
-% 1. File
+%% Menu 1: File
 hm_file = uimenu(hfig,'Label','File');
 
 uimenu(hm_file,'Label','Load data...',...
@@ -44,7 +44,7 @@ uimenu(hm_file,'Label','Save GUI session',...
 uimenu(hm_file,'Label','Open GUI session...',...
     'Callback',@menu_loadGUIsession_Callback);
 
-% 2. Edit
+%% Menu 2: Edit
 hm_edit = uimenu(hfig,'Label','Edit');
 
 h.gui.back = uimenu(hm_edit,'Label','Back',...
@@ -58,21 +58,25 @@ h.gui.isStimAvg = uimenu(hm_edit,'Label','Trace avg.',...
     'Checked','off',...
     'Callback',@menu_traceAvg_Callback);
 
-% 3. Visuals
-hm_vis = uimenu(hfig,'Label','Visuals');
+%% Menu 3: View
+hm_view = uimenu(hfig,'Label','View');
 
-uimenu(hm_vis,'Label','Refresh',...
+uimenu(hm_view,'Label','Refresh',...
     'Callback',@menu_refresh_Callback);
 
-h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
+h.gui.plotLines = uimenu(hm_view,'Label','Lines/Grayscale',...
     'Separator','on',...
     'Checked','on',...
-    'Callback',@menu_plotlines_Callback);
+    'Callback',@menu_isPlotlines_Callback);
 
-h.gui.sqeezeColors = uimenu(hm_vis,'Label','Sqeeze colors',...    
+h.gui.sqeezeColors = uimenu(hm_view,'Label','Sqeeze colors',...    
     'Callback',@menu_sqeeze_Callback);
 
-% 4. Help
+h.gui.showTextFunc = uimenu(hm_view,'Label','Show text (Func)',...    
+    'Callback',@menu_isShowTextFunc_Callback);
+
+
+%% Menu 4: Help
 hm_help = uimenu(hfig,'Label','Help');
 h.gui.help = uimenu(hm_help,'Label','Getting Started',...
     'Callback',@menu_help_Callback);
@@ -82,10 +86,11 @@ set(gcf,'DefaultUicontrolUnits','pixels');
 set(gcf,'defaultUicontrolBackgroundColor',[1 1 1]);
 
 % tab group setup
+M_names = {'Selection','Operations','Regression','Clustering','Saved Clusters'};
+
 h.gui.tgroup = uitabgroup('Parent', hfig, 'Unit','pixels','Position', [50,fig_height-80,fig_width-100,80]);
-numtabs = 5;
+numtabs = length(M_names);
 tab = cell(1,numtabs);
-M_names = {'General','Operations','Regression','Clustering etc.','Saved Clusters'};
 for i = 1:numtabs
     tab{i} = uitab('Parent', h.gui.tgroup, 'BackgroundColor', [1,1,1], 'Title', M_names{i});
 end
@@ -98,7 +103,7 @@ dTextHt = 0; % dTextHt = manual adjustment for 'text' controls:
 bwidth = 30;
 grid = 5:bwidth+5:40*bwidth;
 
-%% UI tab 1: General
+%% UI tab 1: Selection
 i_tab = 1;
 
 % edit_selectROIrange_Callback
@@ -152,13 +157,15 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_blockRange_Callback});
 
+%% UI tab 2: Operations
+i_tab = 2;
 % popup_ranking_Callback
-i=i+n;n=3; 
+i=1;n=3; 
 i_row = 1;
 uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
-menu = {'(choose)','max value','skewness','num pixels','stim reg'};
+menu = {'(choose)','max value','skewness','num pixels'};
 uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@popup_ranking_Callback});
@@ -174,9 +181,10 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',@popup_chooseclrmap_Callback);
 
-
+%% UI tab 3: Regression
+i_tab = 3;
 % popup_chooseStimCode_Callback
-i=i+n;n=3; 
+i=1;n=3; 
 i_row = 1;
 uicontrol('Parent',tab{i_tab},'Style','text','String','Stim Code',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
@@ -187,8 +195,18 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@popup_chooseStimCode_Callback});
 
+% popup_regranking_Callback
+i=i+n;n=3; 
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+menu = {'(choose)','single stim reg'};
+uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@popup_regranking_Callback});
 
-%%
+%% testing
 % testing phase: init load demo data
 if isTesting
     h = loadSessionData(h);
@@ -203,6 +221,7 @@ end
 %% Callback functions
 
 %% Menu 1: File
+
 function menu_loadmat_Callback(hObject,~)
 h = guidata(hObject);
 h = loadSessionData(h);
@@ -245,6 +264,7 @@ load(fullfile(path,file),'h');
 end
 
 %% Menu 2: Edit
+
 function menu_back_Callback(hObject,~)
 h = guidata(hObject);
 bC = h.gui.backCache;
@@ -338,46 +358,51 @@ end
 
 function menu_traceAvg_Callback(hObject,~)
 h = guidata(hObject);
-h = toggleMenu(h,h.gui.isStimAvg,'isStimAvg');
+h = toggleMenu(h,h.gui.isStimAvg,'ops','isStimAvg');
 tIX = getTimeIndex(h);
 h = updateIndices(h,tIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
 
+%% Menu 3: View
 
-%% Menu 3: Visuals
 function menu_refresh_Callback(hObject,~)
 h = guidata(hObject);
-h = refreshFigure(h);
+refreshFigure(h);
 guidata(hObject, h);
 end
 
-function menu_plotlines_Callback(hObject,~)
+function menu_isPlotlines_Callback(hObject,~)
 h = guidata(hObject);
-h = toggleMenu(h,h.gui.plotLines,'plotLines');
+h = toggleMenu(h,h.gui.plotLines,'vis','isPlotLines');
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_sqeeze_Callback(hObject,~)
+h = guidata(hObject);
+[gIX, numU] = squeezeGroupIX(h.gIX);
+h = updateIndices(h,h.cIX,gIX,numU);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_isShowTextFunc_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.showTextFunc,'vis','isShowTextFunc');
 refreshFigure(h);
 guidata(hObject, h);
 end
 
 %% Menu 4: Help
+
 function menu_help_Callback(~,~)
 msg = 'see README on https://github.com/xiuyechen/Explore2p';
 helpdlg(msg);
 end
 
-%%
-function h = toggleMenu(h,menu_handle,flag_string) % h.ops flags only
-% toggle
-currentflag = get(menu_handle,'Checked');
-if strcmp(currentflag,'off')
-    set(menu_handle,'Checked','on');
-    h.ops = setfield(h.ops,flag_string,1);
-elseif strcmp(currentflag,'on')
-    set(menu_handle,'Checked','off');
-    h.ops = setfield(h.ops,flag_string,0);
-end
-end
+%% UI tab 1: Selection
 
 function edit_selectROIrange_Callback(hObject,~)
 h = guidata(hObject);
@@ -388,24 +413,10 @@ if ~isempty(str)
     range = parseRange(str);
     [cIX,gIX] = selectCellRange(h.cIX,h.gIX,range);
     h = updateIndices(h,cIX,gIX);
-    h = refreshFigure(h);
+    refreshFigure(h);
     guidata(hObject, h);
 end
 end
-
-% function edit_selectClusterRange_Callback(hObject,~)
-% h = guidata(hObject);
-% % get/format range
-% str = get(hObject,'String');
-% if ~isempty(str)
-%     str = strrep(str,'end',num2str(max(h.gIX)));
-%     range = parseRange(str);
-%     [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
-%     h = updateIndices(h,cIX,gIX);
-%     refreshFigure(h);
-%     guidata(hObject, h);
-% end
-% end
 
 function edit_manualtIXRange_Callback(hObject,~)
 h = guidata(hObject);
@@ -466,6 +477,8 @@ if ~isempty(str)
 end
 end
 
+%% UI tab 2: Operations
+
 function popup_ranking_Callback(hObject,~)
 rankID = get(hObject,'Value') - 1;
 if rankID==0
@@ -493,8 +506,56 @@ switch rankID
         A = npix(h.cIX_abs,1);
         [~,IX_sort] = sort(A,'descend');
         cIX = h.cIX(IX_sort);
-        gIX = (1:length(cIX))';
-    case 4 % 'stim reg'
+        gIX = (1:length(cIX))';    
+end
+% if rankID>1
+%     setappdata(hfig,'rankscore',round(rankscore*100)/100);
+%     setappdata(hfig,'clrmap_name','jet');
+% else
+%     setappdata(hfig,'clrmap_name','hsv_new');
+% end
+
+h.vis.clrmaptype = 'jet';
+
+h = updateIndices(h,cIX,gIX);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function popup_chooseclrmap_Callback(hObject,~)
+i_clr = get(hObject,'Value');
+h = guidata(hObject);
+if i_clr==1
+    h.vis.clrmaptype = 'hsv';
+elseif i_clr==2
+    h.vis.clrmaptype = 'rand';
+elseif i_clr==3
+    h.vis.clrmaptype = 'jet';
+elseif i_clr==4
+    h.vis.clrmaptype = 'hsv_old';
+end
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+%% UI tab 3: Regression
+
+function popup_chooseStimCode_Callback(hObject,~)
+h = guidata(hObject);
+h.ops.i_stim = get(hObject,'Value')-1;
+guidata(hObject, h);
+end
+
+function popup_regranking_Callback(hObject,~)
+rankID = get(hObject,'Value') - 1;
+if rankID==0
+    return;
+end
+h = guidata(hObject);
+h.gui.rankID = rankID;
+
+switch rankID    
+    case 1 % 'stingle stim reg'
 %         h.M = zscore(h.dat.Fcell{1},0,2);
         t = h.timeInfo;
         
@@ -547,82 +608,19 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
-%%
-
-
-%% ranking functions
-
-% function h = rank_by_skewness(hObject,~)
-% h = guidata(hObject);
-% h.IX_ROI = h.absIX;
-% %% rank traces
-% 
-% % calculate skewness
-% sk = zeros(length(h.IX_ROI),1);
-% for i = 1:length(h.IX_ROI)
-%     ichosen = h.IX_ROI(i);
-%     F =  h.dat.Fcell{1}(ichosen, h.t_start:h.t_stop);
-%     Fneu = h.dat.FcellNeu{1}(ichosen, h.t_start:h.t_stop);
-%     
-%     
-%     % F(:, ops.badframes)  = F(:,    indNoNaN(ix));
-%     % Fneu(:, ops.badframes)  = Fneu(:, indNoNaN(ix));
-%     
-%     
-%     coefNeu = 0.7 * ones(1, size(F,1));
-%     
-%     dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
-%     
-%     % dF          = F - Fneu;
-%     
-%     %     sd           = std(dF, [], 2);
-%     %     sdN          = std(Fneu, [], 2);
-%     
-%     sk(i, 1) = skewness(dF, [], 2);
-% end
-% 
-% [~,IX_sort] = sort(sk,'ascend');
-% gIX = IX_sort(h.cIX_abs);
-% [gIX,numU] = SqueezeGroupIX(gIX);
-% 
-% h = updateIndices(h,h.cIX,gIX,numU);
-% refreshFigure(h);
-% guidata(hObject, h);
-% 
-% end
-
-function menu_sqeeze_Callback(hObject,~)
-h = guidata(hObject);
-[gIX, numU] = squeezeGroupIX(h.gIX);
-h = updateIndices(h,h.cIX,gIX,numU);
-refreshFigure(h);
-guidata(hObject, h);
-end
-
-function popup_chooseclrmap_Callback(hObject,~)
-i_clr = get(hObject,'Value');
-h = guidata(hObject);
-if i_clr==1
-    h.vis.clrmaptype = 'hsv';
-elseif i_clr==2
-    h.vis.clrmaptype = 'rand';
-elseif i_clr==3
-    h.vis.clrmaptype = 'jet';
-elseif i_clr==4
-    h.vis.clrmaptype = 'hsv_old';
-end
-refreshFigure(h);
-guidata(hObject, h);
-end
-
-function popup_chooseStimCode_Callback(hObject,~)
-h = guidata(hObject);
-h.ops.i_stim = get(hObject,'Value')-1;
-guidata(hObject, h);
-end
-
-
 %% extra
+
+function h = toggleMenu(h,menu_handle,group_str,flag_str) % h.ops flags only
+% toggle
+currentflag = get(menu_handle,'Checked');
+if strcmp(currentflag,'off')
+    set(menu_handle,'Checked','on');
+    h.(group_str).(flag_str) = 1;
+elseif strcmp(currentflag,'on')
+    set(menu_handle,'Checked','off');
+    h.(group_str).(flag_str) = 0;
+end
+end
 
 function resizeMainFig_callback(hObject,~)
 h = guidata(hObject);

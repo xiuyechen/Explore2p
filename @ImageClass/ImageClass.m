@@ -77,12 +77,14 @@ classdef ImageClass % h = ImageClass
             %% vis 
             vis = [];
             vis.clrmaptype = rand;
-                     
+            vis.isPlotLines = 1;            
+            vis.isShowTextFunc = 1;
+            
             h.vis = vis;
             
             %% ops
             ops = [];
-            ops.plotLines = 1;
+            
             % data loading
             ops.haveFrameInfo = 0;
             % functional format
