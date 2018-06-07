@@ -28,11 +28,21 @@ h.hfig = hfig;
 % 1. File
 hm_file = uimenu(hfig,'Label','File');
 
-uimenu(hm_file,'Label','Load...',...
+uimenu(hm_file,'Label','Load data...',...
     'Callback',@menu_loadmat_Callback);
 
 uimenu(hm_file,'Label','Export to workspace',...
     'Callback',@menu_export_workspace_Callback);
+
+uimenu(hm_file,'Label','Pop-up plot',...
+    'Callback',@menu_popupPlot_Callback);
+
+uimenu(hm_file,'Label','Save GUI session',...
+    'Separator','on',...
+    'Callback',@menu_saveGUIsession_Callback);
+
+uimenu(hm_file,'Label','Open GUI session...',...
+    'Callback',@menu_loadGUIsession_Callback);
 
 % 2. Edit
 hm_edit = uimenu(hfig,'Label','Edit');
@@ -43,8 +53,8 @@ h.gui.back = uimenu(hm_edit,'Label','Back',...
 h.gui.forward = uimenu(hm_edit,'Label','Forward',...
     'Callback',@menu_forward_Callback);
 
-
 h.gui.isStimAvg = uimenu(hm_edit,'Label','Trace avg.',...
+    'Separator','on',...
     'Checked','off',...
     'Callback',@menu_traceAvg_Callback);
 
@@ -55,6 +65,7 @@ uimenu(hm_vis,'Label','Refresh',...
     'Callback',@menu_refresh_Callback);
 
 h.gui.plotLines = uimenu(hm_vis,'Label','Lines/Grayscale',...
+    'Separator','on',...
     'Checked','on',...
     'Callback',@menu_plotlines_Callback);
 
@@ -191,7 +202,7 @@ end
 
 %% Callback functions
 
-% 1.1
+%% Menu 1: File
 function menu_loadmat_Callback(hObject,~)
 h = guidata(hObject);
 h = loadSessionData(h);
@@ -200,19 +211,48 @@ guidata(hObject, h);
 refreshFigure(h);
 end
 
-% 1.2
 function menu_export_workspace_Callback(hObject,~)
 h = guidata(hObject);
 assignin('base', 'h', h);
 end
 
-% 2.1
+function menu_popupPlot_Callback(hObject,~)
+h = guidata(hObject);
+scrn = get(0,'Screensize');
+fig_width = scrn(3)*0.5;
+fig_height = scrn(4)*0.45; % effective plot is same size as in GUI window
+hfig2 = figure('Position',[scrn(3)*0.2, scrn(4)*0.05, fig_width, fig_height]);
+refreshFigure(h,hfig2);
+end
+
+function menu_saveGUIsession_Callback(hObject,~)
+h = guidata(hObject); %#ok<NASGU> % to save
+
+% get save path
+timestamp = datestr(now,'mmddyy_HHMMSS');
+filename = ['E2p_' timestamp '.mat'];
+[file,path] = uiputfile(filename,'Save current GUI session');
+filedir = fullfile(path,file);
+
+% save master-handle (to all data)
+save(filedir,'h');
+end
+
+function menu_loadGUIsession_Callback(hObject,~)
+h = guidata(hObject);
+[file,path] = uigetfile('*.mat','Load a saved GUI session');
+load(fullfile(path,file),'h');
+end
+
+%% Menu 2: Edit
 function menu_back_Callback(hObject,~)
 h = guidata(hObject);
 bC = h.gui.backCache;
 fC = h.gui.fwCache;
 
 if ~isempty(bC.cIX{1})
+    disp('back (from cache)');
+    
     % set last into forward cache
     fC.cIX = [h.cIX,fC.cIX];
     fC.gIX = [h.gIX,fC.gIX];
@@ -223,19 +263,26 @@ if ~isempty(bC.cIX{1})
     h.gIX = bC.gIX{1};
     h.numK = bC.numK{1};
     h.tIX = bC.tIX{1};
+    if iscell(h.tIX)
+        h.ops.isStimAvg = 1;
+        h.gui.isStimAvg.Checked = 'on';
+    else
+        h.ops.isStimAvg = 0;
+        h.gui.isStimAvg.Checked = 'off';
+    end
+    h.cIX_abs = h.absIX(h.cIX);
+    h = getIndexedData(h);
+    h = refreshFigure(h);
+    
+    % finish
     bC.cIX(1) = [];
     bC.gIX(1) = [];
     bC.numK(1) = [];
     bC.tIX(1) = [];
     
     h.gui.backCache = bC;
-    h.gui.fwCache = fC;    
-    h.cIX_abs = h.absIX(h.cIX);
-    h = getIndexedData(h);
+    h.gui.fwCache = fC; 
     
-    % finish
-    disp('back (from cache)')
-    h = refreshFigure(h);
     set(h.gui.forward,'enable','on');
 else % nothing to retrieve
     set(h.gui.back,'enable','off');
@@ -243,13 +290,14 @@ end
 guidata(hObject, h);
 end
 
-% 2.2
 function menu_forward_Callback(hObject,~)
 h = guidata(hObject);
 bC = h.gui.backCache;
 fC = h.gui.fwCache;
 
 if ~isempty(fC.cIX{1})
+    disp('forward (from cache)');
+    
     % set last into (backward) cache
     bC.cIX = [h.cIX,bC.cIX];
     bC.gIX = [h.gIX,bC.gIX];
@@ -260,6 +308,18 @@ if ~isempty(fC.cIX{1})
     h.gIX = fC.gIX{1};
     h.numK = fC.numK{1};
     h.tIX = fC.tIX{1};
+    if iscell(h.tIX)
+        h.ops.isStimAvg = 1;
+        h.gui.isStimAvg.Checked = 'on';
+    else
+        h.ops.isStimAvg = 0;
+        h.gui.isStimAvg.Checked = 'off';
+    end
+    h.cIX_abs = h.absIX(h.cIX);
+    h = getIndexedData(h);
+    h = refreshFigure(h);
+    
+    % finish
     fC.cIX(1) = [];
     fC.gIX(1) = [];
     fC.numK(1) = [];
@@ -268,14 +328,7 @@ if ~isempty(fC.cIX{1})
     h.gui.backCache = bC;
     h.gui.fwCache = fC;
     % handle rankID: >=2 means write numbers as text next to colorbar
-    %     setappdata(hfig,'rankID',0);
-
-    h.cIX_abs = h.absIX(h.cIX);
-    h = getIndexedData(h);
-    
-    % finish
-    disp('forward (from cache)')
-    h = refreshFigure(h);
+    %     setappdata(hfig,'rankID',0);  
     set(h.gui.back,'enable','on');
 else
     set(h.gui.forward,'enable','off');
@@ -293,7 +346,7 @@ guidata(hObject, h);
 end
 
 
-%% 3.1 Menu: visuals
+%% Menu 3: Visuals
 function menu_refresh_Callback(hObject,~)
 h = guidata(hObject);
 h = refreshFigure(h);
@@ -307,7 +360,7 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
-%% 4. Menu: help
+%% Menu 4: Help
 function menu_help_Callback(~,~)
 msg = 'see README on https://github.com/xiuyechen/Explore2p';
 helpdlg(msg);
@@ -361,10 +414,15 @@ str = get(hObject,'String');
 if ~isempty(str)
     str = strrep(str,'end',num2str(h.timeInfo.nFrames));
     range = parseRange(str);
-    tIX = range';
-    h = updateIndices(h,tIX);
-    refreshFigure(h);
-    guidata(hObject, h);
+    if max(range)>h.timeInfo.nFrames
+        msg = ['Out of range. Max number of frames is ',num2str(h.timeInfo.nFrames)];
+        errordlg(msg);
+    else
+        tIX = range';
+        h = updateIndices(h,tIX);
+        refreshFigure(h);
+        guidata(hObject, h);
+    end
 end
 end
 
@@ -375,11 +433,16 @@ str = get(hObject,'String');
 if ~isempty(str)
     str = strrep(str,'end',num2str(h.timeInfo.nElm));
     range = parseRange(str);
-    h.ops.rangeElm = range';
-    tIX = getTimeIndex(h);
-    h = updateIndices(h,tIX);    
-    refreshFigure(h);
-    guidata(hObject, h);
+    if max(range)>h.timeInfo.nElm
+        msg = ['Out of range. Max number of elements is ',num2str(h.timeInfo.nElm)];
+        errordlg(msg);
+    else
+        h.ops.rangeElm = range';
+        tIX = getTimeIndex(h);
+        h = updateIndices(h,tIX);
+        refreshFigure(h);
+        guidata(hObject, h);
+    end
 end
 end
 
@@ -389,12 +452,17 @@ h = guidata(hObject);
 str = get(hObject,'String');
 if ~isempty(str)
     str = strrep(str,'end',num2str(h.timeInfo.nBlocks));
-    range = parseRange(str);
-    h.ops.rangeBlocks = range';
-    tIX = getTimeIndex(h);
-    h = updateIndices(h,tIX);    
-    refreshFigure(h);
-    guidata(hObject, h);
+    range = parseRange(str);    
+    if max(range)>h.timeInfo.nBlocks
+        msg = ['Out of range. Max number of blocks is ',num2str(h.timeInfo.nBlocks)];
+        errordlg(msg);
+    else        
+        h.ops.rangeBlocks = range';
+        tIX = getTimeIndex(h);
+        h = updateIndices(h,tIX);
+        refreshFigure(h);
+        guidata(hObject, h);
+    end
 end
 end
 
