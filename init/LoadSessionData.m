@@ -5,6 +5,10 @@ disp('loading proc data');
 % h.vis.clrmaptype = 'hsv';
 h.ops.plotLines = 1;
 h.ops.haveFrameInfo = 0;
+
+h.ops.isZscore = 1;
+
+
 h.vis.clrmaptype = 'rand'; 
 
 %% load data
@@ -45,14 +49,20 @@ end
 %% init with data
 % h.hfig = getParentFigure(hObject);
 T = struct2table(h.dat.stat);
-h.M_0 = zscore(h.dat.Fcell{1},0,2);
+
+% h.M_0 = zscore(h.dat.Fcell{1},0,2);
+% h.CellResp = prepFuncData(h);
+
+
 h.IsCell = table2array(T(:,28));
 h.absIX = find(h.IsCell);
 
 % time points
 h = parseFrameInfo(h,frameInfo);
-h.t_start = 1;%2000;
-h.t_stop = h.timeInfo.nFrames;%3000;
+h.ops.rangeBlocks = 1:h.timeInfo.nBlocks;
+h.ops.rangeElm = 1:h.timeInfo.nElm; % this is for ops.isStimAvg = 1;
+% default: ops.isStimAvg = 0;
+tIX = getTimeIndex(h); % tIX = 1:h.timeInfo.nFrames;
 
 % init cell selection to display
 cIX = (1:length(h.absIX))';
@@ -63,6 +73,7 @@ numK = max(gIX);
 h.cIX = cIX;
 h.gIX = gIX;
 h.numK = numK;
-h = updateIndices(h,cIX,gIX,numK);
+h.tIX = tIX;
+h = updateIndices(h,cIX,gIX,numK,tIX);
 
 end
