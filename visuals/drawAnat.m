@@ -84,7 +84,7 @@ h.vis.im_anat = im_anat; % output
 
 %% draw on current axes
 imagesc(h.vis.im_anat);
-axis equal; axis off
+axis equal; axis off; axis ij;
 
 % add number labels of all ROI's (if not too many ROI's)
 cIX_abs = h.cIX_abs;

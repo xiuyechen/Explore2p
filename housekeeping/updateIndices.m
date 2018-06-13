@@ -97,33 +97,7 @@ end
 %             gIX = gIX_last;
 %             gIX_last = temp;
 %             [IX,ia] = setdiff(cIX_last,cIX);
-%             ib = [];
-%         case 5,
-%             disp('parent full clus');
-%             cIX_parent = cIX;
-%             gIX_parent = gIX;
-%             [IX,ia,~] = intersect(cIX_parent,cIX_last);
-% %             numK = length(unique(gIX_last));
-%             U = unique(gIX_parent(ia));
-%             gIX = [];
-%             cIX = [];
-%             for i_U = 1:length(U),
-%                 ix = find(gIX_parent==U(i_U));
-%                 gIX = [gIX;gIX_parent(ix)];
-%                 cIX = [cIX;cIX_parent(ix)];
-%             end
-%         case 6,
-%             disp('rev full clus'); % cIX_last is the parent set
-%             [IX,ia,~] = intersect(cIX_last,cIX);
-% %             numK = length(unique(gIX_last));
-%             U = unique(gIX_last(ia));
-%             gIX = [];
-%             cIX = [];
-%             for i_U = 1:length(U),
-%                 ix = find(gIX_last==U(i_U));
-%                 gIX = [gIX;gIX_last(ix)];
-%                 cIX = [cIX;cIX_last(ix)];
-%             end
+%             ib = [];        
 %     end
 %     if opID<5,
 %         if ~isempty(IX),

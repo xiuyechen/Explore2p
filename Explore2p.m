@@ -7,7 +7,7 @@ function h = Explore2p(varargin)
 %% testing
 % convenience flag for testing phase: init load demo data
 global isTesting;
-isTesting = true;
+isTesting = false;%true;
 
 %% init
 h = ImageClass(); % code to construct/init infrastructure in here 
@@ -69,12 +69,13 @@ h.gui.plotLines = uimenu(hm_view,'Label','Lines/Grayscale',...
     'Checked','on',...
     'Callback',@menu_isPlotlines_Callback);
 
-h.gui.sqeezeColors = uimenu(hm_view,'Label','Sqeeze colors',...    
-    'Callback',@menu_sqeeze_Callback);
-
-h.gui.showTextFunc = uimenu(hm_view,'Label','Show text (Func)',...    
+h.gui.showTextFunc = uimenu(hm_view,'Label','Show text (Func)',...   
+    'Checked','on',...
     'Callback',@menu_isShowTextFunc_Callback);
 
+h.gui.sqeezeColors = uimenu(hm_view,'Label','Sqeeze colors',...  
+    'Separator','on',...
+    'Callback',@menu_sqeeze_Callback);
 
 %% Menu 4: Help
 hm_help = uimenu(hfig,'Label','Help');
@@ -130,7 +131,8 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
 % edit_manualtIXRange_Callback
 i=i+n;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','frame range',...
+h.gui.framerange = ...
+    uicontrol('Parent',tab{i_tab},'Style','text','String','frame range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -140,7 +142,8 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
 % edit_stimElmRange_Callback
 i=i+n;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Element range',...
+h.gui.elementrange = ...
+    uicontrol('Parent',tab{i_tab},'Style','text','String','Element range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -150,7 +153,8 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
 % edit_blockRange_Callback
 i=i+n;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Block range',...
+h.gui.blockrange = ...
+    uicontrol('Parent',tab{i_tab},'Style','text','String','Block range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -380,17 +384,17 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
-function menu_sqeeze_Callback(hObject,~)
+function menu_isShowTextFunc_Callback(hObject,~)
 h = guidata(hObject);
-[gIX, numU] = squeezeGroupIX(h.gIX);
-h = updateIndices(h,h.cIX,gIX,numU);
+h = toggleMenu(h,h.gui.showTextFunc,'vis','isShowTextFunc');
 refreshFigure(h);
 guidata(hObject, h);
 end
 
-function menu_isShowTextFunc_Callback(hObject,~)
+function menu_sqeeze_Callback(hObject,~)
 h = guidata(hObject);
-h = toggleMenu(h,h.gui.showTextFunc,'vis','isShowTextFunc');
+[gIX, numU] = squeezeGroupIX(h.gIX);
+h = updateIndices(h,h.cIX,gIX,numU);
 refreshFigure(h);
 guidata(hObject, h);
 end

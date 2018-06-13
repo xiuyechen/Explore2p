@@ -1,34 +1,49 @@
 function h = loadSessionData(h)
 disp('loading proc data');
 
-%% init (without data)
-% h.vis.clrmaptype = 'hsv';
-h.ops.plotLines = 1;
-h.ops.haveFrameInfo = 0;
-
-h.ops.isZscore = 1;
-
-
-h.vis.clrmaptype = 'rand'; 
-
 %% load data
 root = 'C:\Users\xiuye\Documents\2P_processed\';
 
 global isTesting
 if isTesting
+    % load suite2p output data
     filename1 = 'F_330873-A_2018-05-17_plane1_proc.mat';
     filepath1 = 'C:\Users\xiuye\Documents\2P_processed\Expore2p_demodata\withFrameInfo';
+    h_load = load(fullfile(filepath1, filename1));
     
+    % load frameInfo
     load('C:\Users\xiuye\Documents\2P_processed\Expore2p_demodata\withFrameInfo\frameInfo.mat','frameInfo');
     h.ops.haveFrameInfo = 1;
-    %     filename1 = 'F_m011_010918_plane1_proc.mat';
-    %     filepath1 = 'C:\Users\xiuye\Documents\2P_processed\Expore2p_demodata\m011_010918_1';
 else
+    % UI choose session
     [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
+    if isequal(filename1,0)
+        disp('(File selection cancelled)')
+        return;
+    end
+
+    % load suite2p output data
+    h_load = load(fullfile(filepath1, filename1));
+    
+    % load frameInfo (if applicable)
+    try
+        load(fullfile(filepath1, 'frameInfo.mat'),'frameInfo');
+        h.ops.haveFrameInfo = 1;
+    catch
+        [filename1,filepath1]=uigetfile(fullfile(root, '*.mat'), 'Select frameInfo File');
+        if isequal(filename1,0)
+            h.ops.haveFrameInfo = 0;
+        else
+            try
+                load(fullfile(filepath1, filename1),'frameInfo.mat','frameInfo');
+            catch
+                errordlg('frameInfo invalid, no stimulus/motor information loaded');
+                h.ops.haveFrameInfo = 0;
+            end
+        end
+    end
 end
-
-h_load = load(fullfile(filepath1, filename1));
-
+%% save to GUI data
 if isfield(h_load,'dat') % proc.mat
     h.dat = h_load.dat;
 
@@ -45,22 +60,28 @@ else % this is a stub, not tested
     h.dat.mimg(:,:,5) = 0;
 end
 
-
 %% init with data
-% h.hfig = getParentFigure(hObject);
 T = struct2table(h.dat.stat);
-
-% h.M_0 = zscore(h.dat.Fcell{1},0,2);
-% h.CellResp = prepFuncData(h);
-
-
 h.IsCell = table2array(T(:,28));
 h.absIX = find(h.IsCell);
 
 % time points
-h = parseFrameInfo(h,frameInfo);
-h.ops.rangeBlocks = 1:h.timeInfo.nBlocks;
-h.ops.rangeElm = 1:h.timeInfo.nElm; % this is for ops.isStimAvg = 1;
+if h.ops.haveFrameInfo
+    h = parseFrameInfo(h,frameInfo);
+else
+    % get number of frames from functional trace
+    F = [];
+    for j = 1:numel(h.dat.Fcell)
+        F = cat(2, F, h.dat.Fcell{j}(1, :));
+    end
+    nFrames = length(F);    
+    h = parseFrameInfo(h,[],nFrames);
+end
+
+set(h.gui.framerange,'ToolTipString',['1-',num2str(h.timeInfo.nFrames)]);
+set(h.gui.elementrange,'ToolTipString',['1-',num2str(h.timeInfo.nElm)]);
+set(h.gui.blockrange,'ToolTipString',['1-',num2str(h.timeInfo.nBlocks)]);
+
 % default: ops.isStimAvg = 0;
 tIX = getTimeIndex(h); % tIX = 1:h.timeInfo.nFrames;
 

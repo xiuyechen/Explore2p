@@ -76,7 +76,7 @@ classdef ImageClass % h = ImageClass
         function h = ImageClass()
             %% vis 
             vis = [];
-            vis.clrmaptype = rand;
+            vis.clrmaptype = 'rand';
             vis.isPlotLines = 1;            
             vis.isShowTextFunc = 1;
             
@@ -86,11 +86,14 @@ classdef ImageClass % h = ImageClass
             ops = [];
             
             % data loading
-            ops.haveFrameInfo = 0;
+            ops.haveFrameInfo = 0; % this flag hasn't been implemented..
             % functional format
             ops.isStimAvg = 0;
             ops.rangeBlocks = [];
             ops.rangeElm = [];
+            
+            % data format
+            ops.isZscore = 1;
             
             h.ops = ops;
             
