@@ -2,6 +2,7 @@
 
 ## BETA
 
+![demo1](https://github.com/xiuyechen/Explore2p/blob/master/demo/screenshot1.png "Demo Text 1")
 
 To run on your own computer, go into Explore2p.m and change
 
