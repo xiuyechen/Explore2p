@@ -16,51 +16,54 @@ classdef ImageClass % h = ImageClass
     
     properties (SetAccess=private) % when housekeeping functions are moved into Class code
         
-%         M % dynamically sliced calcium traces, depends on cIX and tIX
-%         M_0 % depends on tIX
-%         stim % depends on tIX
-%         behavior % depends on tIX
-                
-%         vis.clrmap % depends on cIX, gIX, numK and clrmaptype?
-
+        %         M % dynamically sliced calcium traces, depends on cIX and tIX
+        %         M_0 % depends on tIX
+        %         stim % depends on tIX
+        %         behavior % depends on tIX
         
+        %         vis.clrmap % depends on cIX, gIX, numK and clrmaptype?
+        
+        %         absIX % depends on IsCell
     end
-%     properties (Constant)
-%         
-%     end
+    %     properties (Constant)
+    %
+    %     end
     properties (Dependent, Hidden)
         % for renaming purposes
     end
+    
     properties
-        % 
+        %
         hfig % ?? where is it used?
         
         % load data
         dat = []; %loadProcMat; % flag % load from suite2p output (procmat)
-        timeInfo        
-
+        timeInfo
+        
         % core properties, for slicing
         tIX % time index array, 1xn
         cIX % cell index array, or 'chosen'; nx1
         
-        absIX % ROI index array ('absolute index', does not change with curation)
-        cIX_abs % absIX corresponding to the current selection of cIX 
+        %         absIX % absIX = find(IsCell); ROI index array ('absolute index', does not change with curation)
+        
         
         % operations and display
         gIX % grouping index array, for clustering/color display % same size as cIX
         numK % number of groups/colors, corresponding to colormap
-%         clrmap % colormap
-                
+        %         clrmap % colormap
+        
+        cellvsROI
+        
         % visualization fields
-        vis = struct 
+        vis = struct
         % options (set from gui), may be used in analysis
         ops = struct
         % properties only used in gui (e.g. gui element handles and cache)
-        gui = struct        
+        gui = struct
         
         %% these should be private set
         M % dynamically sliced calcium traces, depends on cIX and tIX
-        M_0 % depends on tIX
+        M_0 % traces for all ROI's (not just cells), depends on tIX
         
         % TBD
         stim % depends on tIX
@@ -68,17 +71,35 @@ classdef ImageClass % h = ImageClass
         
         %% temp or convinience fields
         temp = struct
-        IsCell
+        IsCell % absIX = find(IsCell);
+        IsChosen % if show cells, IsChosen = IsCell; else, IsChosen = 1:nROIs
+        
+        % dependent values?
+        %         nROI = length(IsCell);
+        %         nCell = length(absIX);
+        
     end
+    
+    properties (Dependent)
+        roiIX % absIX corresponding to the current selection of cIX, roiIX = absIX(cIX);
+        absIX % absIX = find(IsChosen); ROI index array ('absolute index', does not change with curation)
+        
+        nROIs
+        nCells
+    end
+    
     
     methods
         %% constructor % load
         function h = ImageClass()
-            %% vis 
+            
+            %% vis
             vis = [];
             vis.clrmaptype = 'rand';
-            vis.isPlotLines = 1;            
+            vis.isPlotLines = 1;
             vis.isShowTextFunc = 1;
+            vis.isShowTextAnat = 1;
+            vis.isFixRandSeed = 1;
             
             h.vis = vis;
             
@@ -95,6 +116,8 @@ classdef ImageClass % h = ImageClass
             % data format
             ops.isZscore = 1;
             
+            %             ops.cellvsROI = 1;
+            
             h.ops = ops;
             
             %% gui % init in GUI?
@@ -107,14 +130,17 @@ classdef ImageClass % h = ImageClass
             bCache.gIX = cell(1,1);
             bCache.numK = cell(1,1);
             bCache.tIX = cell(1,1);
+            bCache.cellvsROI = cell(1,1);
             
             fCache.cIX = cell(1,1);
             fCache.gIX = cell(1,1);
             fCache.numK = cell(1,1);
             fCache.tIX = cell(1,1);
+            fCache.cellvsROI = cell(1,1);
+            
             gui.backCache = bCache;
             gui.fwCache = fCache;
-
+            
             % not recording gui element handles here
             
             % gui flags for gui vis
@@ -123,9 +149,23 @@ classdef ImageClass % h = ImageClass
             h.gui = gui;
         end
         %% property get/set methods
-        %         function h = set.clrmap(h,val)
-        %             h.clrmap = val;
-        %         end
+        
+        function val = get.absIX(h)
+            val = find(h.IsChosen);
+        end
+        
+        function val = get.roiIX(h)
+            val = h.absIX(h.cIX);
+        end
+        
+        function val = get.nROIs(h)
+            val = length(h.IsCell);
+        end
+        
+        function val = get.nCells(h)
+            val = length(find(h.IsCell));
+        end
+        
         %% rename old variables (using dependent variables)
         %         % method 1
         %         function obj = set.cIX(obj,val)

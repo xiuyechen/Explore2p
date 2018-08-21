@@ -8,7 +8,7 @@ if size(cIX,2)>1
 end
 
 % if ~exist('isStable','var')
-    IX = ismember(gIX,range);
+    IX = ismember(cIX,range);
     cIX = cIX(IX);
     gIX = gIX(IX);
 % else

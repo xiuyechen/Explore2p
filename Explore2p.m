@@ -7,7 +7,7 @@ function h = Explore2p(varargin)
 %% testing
 % convenience flag for testing phase: init load demo data
 global isTesting;
-isTesting = false;%true;
+isTesting = true;
 
 %% init
 h = ImageClass(); % code to construct/init infrastructure in here 
@@ -58,6 +58,11 @@ h.gui.isStimAvg = uimenu(hm_edit,'Label','Trace avg.',...
     'Checked','off',...
     'Callback',@menu_traceAvg_Callback);
 
+h.gui.isCellvsROI = uimenu(hm_edit,'Label','Indexing: cell vs. ROI',...
+    'Separator','on',...
+    'Checked','on',...
+    'Callback',@menu_cellvsROI_Callback);
+
 %% Menu 3: View
 hm_view = uimenu(hfig,'Label','View');
 
@@ -73,9 +78,24 @@ h.gui.showTextFunc = uimenu(hm_view,'Label','Show text (Func)',...
     'Checked','on',...
     'Callback',@menu_isShowTextFunc_Callback);
 
+h.gui.showTextAnat = uimenu(hm_view,'Label','Show text (Anat)',...   
+    'Checked','on',...
+    'Callback',@menu_isShowTextAnat_Callback);
+
+h.gui.fixRandSeed = uimenu(hm_view,'Label','Fix Random clrmap',...   
+    'Checked','on',...
+    'Callback',@menu_isFixRandSeed_Callback);
+
 h.gui.sqeezeColors = uimenu(hm_view,'Label','Sqeeze colors',...  
     'Separator','on',...
     'Callback',@menu_sqeeze_Callback);
+
+h.gui.splitCells = uimenu(hm_view,'Label','Split cells',...      
+    'Callback',@menu_splitCells_Callback);
+
+h.gui.showLegend = uimenu(hm_view,'Label','Show stimulus legend',...    
+    'Separator','on',...
+    'Callback',@menu_showLegend_Callback);
 
 %% Menu 4: Help
 hm_help = uimenu(hfig,'Label','Help');
@@ -107,26 +127,48 @@ grid = 5:bwidth+5:40*bwidth;
 %% UI tab 1: Selection
 i_tab = 1;
 
-% edit_selectROIrange_Callback
+% edit_selectClusterRange_Callback
 i=1;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Cell/ROI range',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
-    'ToolTipString','Type in range to display, e.g. ''1,2,5'',''2:4'',''6:end''');
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_selectClusterRange_Callback});
+
+% edit_selectCellRange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cell range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in range to display, e.g. ''1,3-5'',''2:4'';''1:end'' to show all');
+i_row = 2;
+h.gui.cellRange = uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_selectCellRange_Callback});
+
+% edit_selectROIrange_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','ROI range',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in range to display, e.g. ''1,3-5'',''2:4'';''1:end'' to show all');
+i_row = 2;
+h.gui.ROIrange = uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@edit_selectROIrange_Callback});
 
-% % edit_selectClusterRange_Callback
-% i=i+n;n=3;
-% i_row = 1;
-% uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
-%     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
-% i_row = 2;
-% uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
-%     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-%     'Callback',{@edit_selectClusterRange_Callback});
+% edit_toggleCellvsROI_Callback
+i=i+n;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Edit Cell/ROI',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in range to display, e.g. ''1,3-5'',''2:4'';''1:end'' to show all');
+i_row = 2;
+h.gui.editCellvsROI = uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_toggleCellvsROI_Callback});
 
 % edit_manualtIXRange_Callback
 i=i+n;n=3;
@@ -134,6 +176,7 @@ i_row = 1;
 h.gui.framerange = ...
     uicontrol('Parent',tab{i_tab},'Style','text','String','frame range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    % ToolTipString set in 'h = loadSessionData(h)'
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
@@ -145,6 +188,7 @@ i_row = 1;
 h.gui.elementrange = ...
     uicontrol('Parent',tab{i_tab},'Style','text','String','Element range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    % ToolTipString set in 'h = loadSessionData(h)'
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
@@ -156,6 +200,7 @@ i_row = 1;
 h.gui.blockrange = ...
     uicontrol('Parent',tab{i_tab},'Style','text','String','Block range',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    % ToolTipString set in 'h = loadSessionData(h)'
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
@@ -209,6 +254,20 @@ menu = {'(choose)','single stim reg'};
 uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',{@popup_regranking_Callback});
+
+%% UI tab 4: Clustering
+i_tab = 4;
+
+% edit_kmeans_Callback
+i=1;n=3;
+i_row = 1;
+h.gui.framerange = ...
+    uicontrol('Parent',tab{i_tab},'Style','text','String','k-means',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_kmeans_Callback});
 
 %% testing
 % testing phase: init load demo data
@@ -282,11 +341,13 @@ if ~isempty(bC.cIX{1})
     fC.gIX = [h.gIX,fC.gIX];
     fC.numK = [h.numK,fC.numK];
     fC.tIX = [h.tIX,fC.tIX];
+    fC.cellvsROI = [h.cellvsROI,fC.cellvsROI];
     % retrieve
     h.cIX = bC.cIX{1};
     h.gIX = bC.gIX{1};
     h.numK = bC.numK{1};
     h.tIX = bC.tIX{1};
+    h.cellvsROI = bC.cellvsROI{1};
     if iscell(h.tIX)
         h.ops.isStimAvg = 1;
         h.gui.isStimAvg.Checked = 'on';
@@ -294,7 +355,9 @@ if ~isempty(bC.cIX{1})
         h.ops.isStimAvg = 0;
         h.gui.isStimAvg.Checked = 'off';
     end
-    h.cIX_abs = h.absIX(h.cIX);
+
+    h = setCellvsROI(h);
+
     h = getIndexedData(h);
     h = refreshFigure(h);
     
@@ -303,6 +366,7 @@ if ~isempty(bC.cIX{1})
     bC.gIX(1) = [];
     bC.numK(1) = [];
     bC.tIX(1) = [];
+    bC.cellvsROI(1) = [];
     
     h.gui.backCache = bC;
     h.gui.fwCache = fC; 
@@ -327,11 +391,13 @@ if ~isempty(fC.cIX{1})
     bC.gIX = [h.gIX,bC.gIX];
     bC.numK = [h.numK,bC.numK];
     bC.tIX = [h.tIX,bC.tIX];
+    bC.cellvsROI = [h.cellvsROI,bC.cellvsROI];
     % retrieve
     h.cIX = fC.cIX{1};
     h.gIX = fC.gIX{1};
     h.numK = fC.numK{1};
     h.tIX = fC.tIX{1};
+    h.cellvsROI = fC.cellvsROI{1};
     if iscell(h.tIX)
         h.ops.isStimAvg = 1;
         h.gui.isStimAvg.Checked = 'on';
@@ -339,7 +405,9 @@ if ~isempty(fC.cIX{1})
         h.ops.isStimAvg = 0;
         h.gui.isStimAvg.Checked = 'off';
     end
-    h.cIX_abs = h.absIX(h.cIX);
+
+    h = setCellvsROI(h);
+    
     h = getIndexedData(h);
     h = refreshFigure(h);
     
@@ -348,6 +416,7 @@ if ~isempty(fC.cIX{1})
     fC.gIX(1) = [];
     fC.numK(1) = [];
     fC.tIX(1) = [];
+    fC.cellvsROI(1) = [];
     
     h.gui.backCache = bC;
     h.gui.fwCache = fC;
@@ -364,7 +433,27 @@ function menu_traceAvg_Callback(hObject,~)
 h = guidata(hObject);
 h = toggleMenu(h,h.gui.isStimAvg,'ops','isStimAvg');
 tIX = getTimeIndex(h);
-h = updateIndices(h,tIX);
+h = updateIndices(h,h.cellvsROI,tIX);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_cellvsROI_Callback(hObject,~)
+h = guidata(hObject);
+[h,cellvsROI] = toggleMenu(h,h.gui.isCellvsROI);
+
+% convert indices
+absIX = find(h.IsCell);
+if cellvsROI % convert from roiIX... keep cells within roiIX
+   IX = ismember(absIX,h.cIX);   
+   cIX = find(IX);
+   gIX = (1:length(cIX))';
+else % convert from cIX to roiIX
+    cIX = absIX(h.cIX);
+    gIX = ones(length(cIX),1);
+end
+
+h = updateIndices(h,cellvsROI,cIX,gIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
@@ -391,12 +480,63 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
+function menu_isShowTextAnat_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.showTextAnat,'vis','isShowTextAnat');
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_isFixRandSeed_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.fixRandSeed,'vis','isFixRandSeed');
+refreshFigure(h);
+guidata(hObject, h);
+end
+
 function menu_sqeeze_Callback(hObject,~)
 h = guidata(hObject);
 [gIX, numU] = squeezeGroupIX(h.gIX);
-h = updateIndices(h,h.cIX,gIX,numU);
+h = updateIndices(h,h.cellvsROI,h.cIX,gIX,numU);
 refreshFigure(h);
 guidata(hObject, h);
+end
+
+function menu_splitCells_Callback(hObject,~)
+h = guidata(hObject);
+gIX = (1:length(h.gIX))';
+numU = max(gIX);
+h = updateIndices(h,h.cellvsROI,h.cIX,gIX,numU);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_showLegend_Callback(hObject,~)
+h = guidata(hObject);
+names = h.timeInfo.stimCodeNameArray;
+
+%% get trial-averaged stimulus
+IX = [];
+for ii = h.ops.rangeElm
+    IX = horzcat(IX,h.timeInfo.stimmat{ii}(1,:)); %#ok<AGROW>
+end
+stim = h.timeInfo.stimCode(IX);
+
+%% draw stimbar
+figure('Position',[100,500,500,130]);hold on;
+title('Stimulus bar (1 repetition)')
+roughhalfbarheight = 1;
+[stimbar,~,cmap] = getStimBar(roughhalfbarheight,stim); % horizontal stimulus bar
+image(stimbar);axis off; axis tight
+colormap(cmap);
+
+% draw legend
+hidden_h = [];
+for ii = 1 : 5
+    hidden_h(ii) = surf(uint8(ii-[1 1;1 1]), 'edgecolor', 'none','facealpha',0); 
+end
+legend(hidden_h, names, 'orientation','horizontal','location','SouthOutside')
+
 end
 
 %% Menu 4: Help
@@ -408,16 +548,71 @@ end
 
 %% UI tab 1: Selection
 
-function edit_selectROIrange_Callback(hObject,~)
+function edit_selectClusterRange_Callback(hObject,~)
 h = guidata(hObject);
 % get/format range
 str = get(hObject,'String');
 if ~isempty(str)
     str = strrep(str,'end',num2str(max(h.gIX)));
     range = parseRange(str);
-    [cIX,gIX] = selectCellRange(h.cIX,h.gIX,range);
-    h = updateIndices(h,cIX,gIX);
+    [cIX,gIX] = selectClusterRange(h.cIX,h.gIX,range);
+    h = updateIndices(h,h.cellvsROI,cIX,gIX);
     refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
+function edit_selectCellRange_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    str = strrep(str,'end',num2str(h.nCells));
+    cIX = parseRange(str);
+    cellvsROI = 1;
+    h = updateIndices(h,cellvsROI,cIX,(1:length(cIX))');
+    refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
+function edit_selectROIrange_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)    
+    str = strrep(str,'end',num2str(h.nROIs));
+    roiIX = parseRange(str);
+    cellvsROI = 0;
+    h = updateIndices(h,cellvsROI,roiIX,ones(size(roiIX)));
+    refreshFigure(h);    
+    guidata(hObject, h);
+end
+end
+
+function edit_toggleCellvsROI_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    temp = textscan(str,'%d');
+    ix = temp{:};
+    
+    if h.cellvsROI
+        % mark as not cell
+        h.IsCell(h.roiIX(ix)) = 0;
+        % update
+        
+    else % if is ROI
+        % mark as cell
+        h.IsCell(ix) = 1;
+        % update
+        
+    end
+    
+    h = updateIndices(h);
+    refreshFigure(h);
+    
     guidata(hObject, h);
 end
 end
@@ -434,7 +629,7 @@ if ~isempty(str)
         errordlg(msg);
     else
         tIX = range';
-        h = updateIndices(h,tIX);
+        h = updateIndices(h,h.cellvsROI,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -454,7 +649,7 @@ if ~isempty(str)
     else
         h.ops.rangeElm = range';
         tIX = getTimeIndex(h);
-        h = updateIndices(h,tIX);
+        h = updateIndices(h,h.cellvsROI,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -474,7 +669,7 @@ if ~isempty(str)
     else        
         h.ops.rangeBlocks = range';
         tIX = getTimeIndex(h);
-        h = updateIndices(h,tIX);
+        h = updateIndices(h,h.cellvsROI,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -500,14 +695,14 @@ switch rankID
     case 2 % 'skewness'
         T = struct2table(h.dat.stat);        
         skew = table2array(T(:,22));
-        A = skew(h.cIX_abs,1);
+        A = skew(h.roiIX,1);
         [~,IX_sort] = sort(A,'ascend');
         cIX = h.cIX(IX_sort);
         gIX = (1:length(cIX))';
     case 3 % 'num pixels'
         T = struct2table(h.dat.stat);        
         npix = table2array(T(:,6));
-        A = npix(h.cIX_abs,1);
+        A = npix(h.roiIX,1);
         [~,IX_sort] = sort(A,'descend');
         cIX = h.cIX(IX_sort);
         gIX = (1:length(cIX))';    
@@ -521,7 +716,7 @@ end
 
 h.vis.clrmaptype = 'jet';
 
-h = updateIndices(h,cIX,gIX);
+h = updateIndices(h,h.cellvsROI,cIX,gIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
@@ -559,34 +754,12 @@ h = guidata(hObject);
 h.gui.rankID = rankID;
 
 switch rankID    
-    case 1 % 'stingle stim reg'
-%         h.M = zscore(h.dat.Fcell{1},0,2);
-        t = h.timeInfo;
-        
+    case 1 % 'single stim reg'
         % get chosen stim type
-        disp(t.stimCodeNameArray{h.ops.i_stim});        
+        disp(h.timeInfo.stimCodeNameArray{h.ops.i_stim});        
         
-        % regression 
-        %% [better way to make reg.... to-do]
-        reg_raw = zeros(t.nFrames,1);
-        IX = t.stimChunks(h.ops.i_stim).ix;
-        % collapse
-        allIx = [];
-        for ii = 1:length(IX)
-            allIx = [allIx IX(ii).ix]; %#ok<AGROW>
-        end
-        IX = allIx;
-        reg_raw(IX) = 1;
-        if h.ops.isStimAvg
-            IX = [];
-            for ii = h.ops.rangeElm
-                IX = horzcat(IX,t.stimmat{ii}(1,:)); %#ok<AGROW>
-            end            
-            reg = reg_raw(IX);
-        else
-            reg = reg_raw(h.tIX);
-        end
-        %%
+        % regression with simple (boxcar) regressor     
+        reg = makeRegressors(h);
         coeff = corr(reg,h.M');
         
         % sort by regression result
@@ -607,22 +780,52 @@ end
 
 h.vis.clrmaptype = 'jet';
 
-h = updateIndices(h,cIX,gIX);
+h = updateIndices(h,h.cellvsROI,cIX,gIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
 
+%% UI tab 4: clustering
+
+function edit_kmeans_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    temp = textscan(str,'%d');
+    numK = temp{:};
+    gIX = kmeans_direct(h.M,numK);
+    
+    h = updateIndices(h,h.cellvsROI,h.cIX,gIX,numK);
+    refreshFigure(h);
+    guidata(hObject, h);   
+end
+end
+
 %% extra
 
-function h = toggleMenu(h,menu_handle,group_str,flag_str) % h.ops flags only
-% toggle
+function [h,flag] = toggleMenu(h,menu_handle,group_str,flag_str) % h.ops flags only
+% h = toggleMenu(h,menu_handle,group_str,flag_str)
+% [h,flag] = toggleMenu(h,menu_handle)
+
 currentflag = get(menu_handle,'Checked');
-if strcmp(currentflag,'off')
-    set(menu_handle,'Checked','on');
-    h.(group_str).(flag_str) = 1;
-elseif strcmp(currentflag,'on')
-    set(menu_handle,'Checked','off');
-    h.(group_str).(flag_str) = 0;
+% toggle
+if nargin == 2
+    if strcmp(currentflag,'off')
+        set(menu_handle,'Checked','on');
+        flag = 1;
+    elseif strcmp(currentflag,'on')
+        set(menu_handle,'Checked','off');
+        flag = 0;
+    end
+elseif nargin ==4        
+    if strcmp(currentflag,'off')
+        set(menu_handle,'Checked','on');
+        h.(group_str).(flag_str) = 1;
+    elseif strcmp(currentflag,'on')
+        set(menu_handle,'Checked','off');
+        h.(group_str).(flag_str) = 0;
+    end
 end
 end
 

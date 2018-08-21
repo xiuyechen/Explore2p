@@ -1,5 +1,5 @@
 function h = drawAnat(h)
-cIX_abs = h.cIX_abs; % cIX_abs = h.absIX(cIX);
+roiIX = h.roiIX; 
 
 %% plot mean image with ROI's drawn on top.
 % mean image
@@ -19,7 +19,7 @@ H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
 % [iclust1, iclust2, V1, V2] = ...
 %     getviclust(h.dat.stat, h.dat.cl.Ly,  h.dat.cl.Lx, h.dat.cl.vmap, h.dat.F.ichosen);
 
-[iclust1,V1] = getviclustRange(h.dat.stat, h.dat.cl.Ly,  h.dat.cl.Lx, h.dat.cl.vmap, cIX_abs);
+[iclust1,V1] = getviclustRange(h.dat.stat, h.dat.cl.Ly,  h.dat.cl.Lx, h.dat.cl.vmap, roiIX);
 
 % iselect in Suite2p is drawn in gray;
 % iselect     = iclust1==h.dat.F.ichosen;
@@ -48,9 +48,9 @@ H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
 % else  % use RGB 
     clrmap_abs = zeros(length(h.absIX),3); % each cell gets a color, saved into h.clrmap for use across the gui
     clrmat = h.vis.clrmap(h.gIX,:);
-    clrmap_abs(cIX_abs,1) = clrmat(:,1);
-    clrmap_abs(cIX_abs,2) = clrmat(:,2);
-    clrmap_abs(cIX_abs,3) = clrmat(:,3);
+    clrmap_abs(roiIX,1) = clrmat(:,1);
+    clrmap_abs(roiIX,2) = clrmat(:,2);
+    clrmap_abs(roiIX,3) = clrmat(:,3);
     
     % (the following is cumbersome but gets the indexing done)
     R = zeros(size(im_bg0));
@@ -87,13 +87,12 @@ imagesc(h.vis.im_anat);
 axis equal; axis off; axis ij;
 
 % add number labels of all ROI's (if not too many ROI's)
-cIX_abs = h.cIX_abs;
-if length(cIX_abs)<50
+if h.vis.isShowTextAnat %length(cIX_abs)<50
     
     [~,ix_sort] = sort(h.gIX,'ascend');
-    for i = 1:length(cIX_abs)
+    for i = 1:length(roiIX)
         ii = ix_sort(i);
-        ichosen = cIX_abs(i);
+        ichosen = roiIX(i);
         x0 = mean(h.dat.stat(ichosen).xpix);
         y0 = mean(h.dat.stat(ichosen).ypix);        
         str = num2str(h.cIX(ii));

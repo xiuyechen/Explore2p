@@ -1,21 +1,23 @@
 
-function h = updateIndices(h,arg1,arg2,arg3,arg4)
+function h = updateIndices(h,cellvsROI,arg1,arg2,arg3,arg4)
 % frequently used, updates cell-index,group-index,cluster-number. set-operations included in here.
-% updateIndices(h,cIX,gIX,numK,tIX)
-% updateIndices(h,cIX,gIX,numK)
-% updateIndices(h,cIX,gIX)
-% updateIndices(h,tIX)
+% updateIndices(h,cellvsROI,cIX,gIX,numK,tIX)
+% updateIndices(h,cellvsROI,cIX,gIX,numK)
+% updateIndices(h,cellvsROI,cIX,gIX)
+% updateIndices(h,cellvsROI,tIX) % CAUTION: NOT == updateIndices(h,cellvsROI,cIX)
+% updateIndices(h,cellvsROI)
+% updateIndices(h)
 
-if nargin == 2
+if nargin == 3
     tIX = arg1;
-elseif nargin == 3
-    cIX = arg1;
-    gIX = arg2;
 elseif nargin == 4
     cIX = arg1;
     gIX = arg2;
-    numK = arg3;
 elseif nargin == 5
+    cIX = arg1;
+    gIX = arg2;
+    numK = arg3;
+elseif nargin == 6
     cIX = arg1;
     gIX = arg2;
     numK = arg3;
@@ -30,6 +32,9 @@ end
 % end
 
 %% 
+if ~exist('cellvsROI','var')
+    cellvsROI = h.cellvsROI;
+end
 if ~exist('cIX','var') || isempty(cIX)
     cIX = h.cIX;
 end
@@ -49,6 +54,19 @@ if isempty(cIX)
     return;
 end
 
+%% cell vs ROI?
+
+% if h.ops.isCellnotROIix
+%     h.roiIX = h.absIX(cIX);
+%     h.absIX = find(h.IsCell);
+% else
+%     h.roiIX = cIX;
+%     
+%     % convert roiIX input into new cIX, given the updated absIX?
+%     h.cIX = h.roiIX;
+%     h.gIX = ones(size(h.cIX));
+% end
+
 %% update cache
 bC = h.gui.backCache; 
 
@@ -56,11 +74,13 @@ cIX_last = h.cIX;
 gIX_last = h.gIX;
 numK_last = h.numK;
 tIX_last = h.tIX;
+cellvsROI_last = h.cellvsROI;
 if ~(isequal(cIX_last,cIX) && isequal(gIX_last,gIX) && isequal(numK_last,numK) && isequal(tIX_last,tIX))
     bC.cIX = [cIX_last,bC.cIX];
     bC.gIX = [gIX_last,bC.gIX];
     bC.numK = [h.numK,bC.numK];
     bC.tIX = [tIX_last,bC.tIX];
+    bC.cellvsROI = [cellvsROI_last,bC.cellvsROI];
     
     set(h.gui.back,'enable','on');
     if length(bC.cIX)>20
@@ -68,6 +88,7 @@ if ~(isequal(cIX_last,cIX) && isequal(gIX_last,gIX) && isequal(numK_last,numK) &
         bC.gIX(end) = [];
         bC.numK(end) = [];
         bC.tIX(end) = [];
+        bC.cellvsROI(end) = [];
     end
 end
  
@@ -116,16 +137,20 @@ end
 %%
 h.gui.backCache = bC;
 
+
 % sort based on gIX
 [~,I] = sort(gIX);
 h.cIX = cIX(I);
 h.gIX = gIX(I);
-h.cIX_abs = h.absIX(h.cIX);
+% h.roiIX = h.absIX(h.cIX);
 
 % only M depends on cIX change... 
 % whereas a tIX change requires more updates
 
 h.tIX = tIX;
+
+h.cellvsROI = cellvsROI;
+h = setCellvsROI(h);
 % h = getFuncData(h); % 6/4/18
 %%
 % M = GetTimeIndexedData(hfig);
@@ -141,8 +166,8 @@ end
 h = getColormap(h);
 
 if length(h.cIX)>200
-    h.flag.plotLines = 0;
-    set(h.gui.plotlines,'Checked','off');
+    h.vis.isPlotLines = 0;
+    set(h.gui.plotLines,'Checked','off');
 end
 %% Resets: reset flags the NEXT time this function is called (so they only apply to this particular plot)
 % handle rankID: >=2 means write numbers as text next to colorbar

@@ -63,7 +63,11 @@ end
 %% init with data
 T = struct2table(h.dat.stat);
 h.IsCell = table2array(T(:,28));
-h.absIX = find(h.IsCell);
+% h.absIX = find(h.IsCell);
+h.IsChosen = h.IsCell;
+h.ops.cellvsROI = 1;
+set(h.gui.cellRange,'BackgroundColor',[1,1,0.8]);
+set(h.gui.ROIrange,'BackgroundColor',[1,1,1]);
 
 % time points
 if h.ops.haveFrameInfo
@@ -89,12 +93,14 @@ tIX = getTimeIndex(h); % tIX = 1:h.timeInfo.nFrames;
 cIX = (1:length(h.absIX))';
 gIX = (1:length(cIX))';
 numK = max(gIX);
+cellvsROI = 1;
 
 % init: manually set indices so that caching works...
 h.cIX = cIX;
 h.gIX = gIX;
 h.numK = numK;
 h.tIX = tIX;
-h = updateIndices(h,cIX,gIX,numK,tIX);
+h.cellvsROI = cellvsROI;
+h = updateIndices(h,cellvsROI,cIX,gIX,numK,tIX);
 
 end
