@@ -1,7 +1,7 @@
 classdef ImageClass % h = ImageClass
     % functional data class, imports from suite2p output file (*proc.mat)
     % maybe make constructor take mouse/date/session, and a 'isGUI' flag
-    % for scripts
+    % for scripts?
     %{
     data structured for a gui session
     This class is initiated when the GUI first loads data.
@@ -185,7 +185,8 @@ classdef ImageClass % h = ImageClass
         %         end
         
         %% functions in separate files (in this class folder)
-        test(h);
+%         test(h);
+%         h = loadSessionData(h);
         
         %% local functions (defined here)
         function View(h)

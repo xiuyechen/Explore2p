@@ -204,7 +204,7 @@ text(0.5,0,str,'HorizontalAlignment','center','Units','normalized')
 axes('Units','pixels','Position',[pos(1),pos(2)+pos(4)*(1-barratio),pos(3),pos(4)*barratio]);
 
 roughhalfbarheight = 100;
-[stimbar_,halfbarheight] = getStimBar(roughhalfbarheight,stim);
+[stimbar_,halfbarheight] = getStimBar(roughhalfbarheight,stim,h.timeInfo.nElm);
 
 % pad with margin on right to fit combo-image size
 if ~isPlotLines

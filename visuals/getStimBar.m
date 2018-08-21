@@ -1,4 +1,4 @@
-function [stimbar,halfbarheight,cmap] = getStimBar(roughhalfbarheight,stim) % horizontal stimulus bar
+function [stimbar,halfbarheight,cmap] = getStimBar(roughhalfbarheight,stim,nStim) % horizontal stimulus bar
 halfbarnum = 8;
 
 % stimbar = repmat(vertcat(m1,m2),[1 1 3]); % 3 color layers in dim3
@@ -9,12 +9,13 @@ stimbar = 0.3*ones(halfbarnum*2,length(stim),3);
 x = stim;
 
 % 
-nStim = length(unique(stim));
+U = unique(stim);
 cmap = jet(nStim);
-for ii = 1:nStim
-    ix = x==ii;
+for ii = 1:length(U)
+    i_stim = U(ii);
+    ix = x==i_stim;
     for i_rgb = 1:3
-        stimbar(:,ix,i_rgb) = cmap(ii,i_rgb);
+        stimbar(:,ix,i_rgb) = cmap(i_stim,i_rgb);
     end
 end
 

@@ -142,7 +142,6 @@ h.gui.backCache = bC;
 [~,I] = sort(gIX);
 h.cIX = cIX(I);
 h.gIX = gIX(I);
-% h.roiIX = h.absIX(h.cIX);
 
 % only M depends on cIX change... 
 % whereas a tIX change requires more updates
@@ -151,12 +150,8 @@ h.tIX = tIX;
 
 h.cellvsROI = cellvsROI;
 h = setCellvsROI(h);
-% h = getFuncData(h); % 6/4/18
-%%
-% M = GetTimeIndexedData(hfig);
-% setappdata(hfig,'M',M);
 
-% h = updateTimeIndexedData(h);
+%%
 h = getIndexedData(h); % updates variables depending on tIX (M_0,M,behavior,stim)
 
 if exist('numK','var')

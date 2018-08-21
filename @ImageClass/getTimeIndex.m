@@ -16,8 +16,14 @@ rangeBlocks = h.ops.rangeBlocks;
 t = h.timeInfo;
 
 %% set tIX
-if isStimAvg    
-    tIX = t.stimmat(h.ops.rangeElm); % iscell(tIX) = true;
+if isStimAvg 
+    tIX = cell(1,length(h.ops.rangeElm));
+    for ii = 1:length(h.ops.rangeElm)
+        i_elm = h.ops.rangeElm(ii);
+%         tIX = t.stimmat(h.ops.rangeElm); % iscell(tIX) = true;
+        tIX{ii} = cell2mat(t.stimmat(h.ops.rangeBlocks,i_elm));        
+    end
+
 else
     tIX = [];
     for i_block = rangeBlocks
