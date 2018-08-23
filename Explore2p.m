@@ -182,7 +182,7 @@ h.gui.ROIrange = uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
 % edit_toggleCellvsROI_Callback
 i=i+n;n=3;
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Edit Cell/ROI',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cell/not cell(!)',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
     'ToolTipString','Type in range to display, e.g. ''1,3-5'',''2:4'';''1:end'' to show all');
 i_row = 2;
@@ -231,7 +231,7 @@ i_tab = 2;
 % popup_ranking_Callback
 i=1;n=3; 
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Rank cells',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 menu = {'(choose)','max value','skewness','num pixels'};
@@ -255,7 +255,7 @@ i_tab = 3;
 % popup_chooseStimCode_Callback
 i=1;n=3; 
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Stim Code',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Stim code',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
     'ToolTipString','These are the individual stimulus sequence elements. Select stimulus for regression under ''Rank Cells''\''stim reg''');
 i_row = 2;
@@ -267,7 +267,7 @@ uicontrol('Parent',tab{i_tab},'Style','popupmenu','String',menu,'Value',1,...
 % popup_regranking_Callback
 i=i+n;n=3; 
 i_row = 1;
-uicontrol('Parent',tab{i_tab},'Style','text','String','Rank Cells',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','Rank cells',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 menu = {'(choose)','single stim reg'};
@@ -705,37 +705,44 @@ h = guidata(hObject);
 % get/format range
 str = get(hObject,'String');
 if ~isempty(str)
-    temp = textscan(str,'%d');
-    ix = temp{:};
-    
-    % update IsCell
-    if h.cellvsROI
-        % cell, mark as not cell
-        roi_ix = cIX2roiIX(ix,h.IsCell);
-        fprintf('cell #%d = roi #%d set to not-cell \n',ix,roi_ix);
-        h.IsCell(roi_ix) = 0;
-
-        % manually update indexing
-        cIX = h.cIX;
-        cIX(ix) = [];
-        cIX(ix:end) = cIX(ix:end)-1;
+    choice = questdlg(['Toggling cell-assignment changes cell indexing;' ...
+        'also you need to save it using File\Save updated input file (proc.mat).' ...
+        'Would you like to proceed?'], ...
+        'Warning'); % Yes/No/Cancel
+    % Handle response
+    if strcmp(choice,'Yes')        
+        temp = textscan(str,'%d');
+        ix = temp{:};
         
-        gIX = h.gIX;
-        gIX(ix) = [];
+        % update IsCell
+        if h.cellvsROI
+            % cell, mark as not cell
+            roi_ix = cIX2roiIX(ix,h.IsCell);
+            fprintf('cell #%d = roi #%d set to not-cell \n',ix,roi_ix);
+            h.IsCell(roi_ix) = 0;
+            
+            % manually update indexing
+            cIX = h.cIX;
+            cIX(ix) = [];
+            cIX(ix:end) = cIX(ix:end)-1;
+            
+            gIX = h.gIX;
+            gIX(ix) = [];
+            
+            h = updateIndices(h,h.cellvsROI,cIX,gIX);
+            
+        else % if is ROI
+            % ROI, mark as cell
+            roi_ix = ix;
+            h.IsCell(roi_ix) = 1;
+            fprintf('roi #%d set to cell \n',roi_ix);
+            
+            h = updateIndices(h);
+        end
         
-        h = updateIndices(h,h.cellvsROI,cIX,gIX);
-        
-    else % if is ROI
-        % ROI, mark as cell
-        roi_ix = ix;
-        h.IsCell(roi_ix) = 1;
-        fprintf('roi #%d set to cell \n',roi_ix);
-        
-        h = updateIndices(h);
+        refreshFigure(h);
+        guidata(hObject, h);
     end
-
-    refreshFigure(h);    
-    guidata(hObject, h);
 end
 end
 
