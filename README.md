@@ -20,7 +20,7 @@ Running this script should add the correct directories to the MATLAB search path
 (Alternatively, add the code folder with subfolders manually). 
 The demo data (only ~90MB) should download automatically. When the GUI launches with this demo, it should look like this:
 
-![screenshot](docs/screenshot_init.png)
+![screenshot](https://raw.githubusercontent.com/xiuyechen/Explore2p/master/docs/screenshot_init.PNG "GUI screenshot")
 
 Hover your mouse over text labels (e.g. 'Cluster range') to see tool-tips pop up. 
 
