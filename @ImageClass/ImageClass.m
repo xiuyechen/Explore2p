@@ -5,90 +5,104 @@ classdef ImageClass % h = ImageClass
     %{
     data structured for a gui session
     This class is initiated when the GUI first loads data.
-    Data all goes under this handle, so that by default functions don't have to
-    pass values around.
-    
-    ...
-    In the future, when analyzing multiple sessions, maybe an array of
-    these objects can be handled at once.
 
+
+    ImageClass object can be used either with the GUI or in script.
+    - GUI:    
+    Object created at GUI initiation. One GUI window only handles data
+    from one imaging session, but multiple GUI windows can be used at
+    once if different handles are specified (e.g. h_mouseX = Explore2p;)
+    All data is stored under this object. Most functions only pass
+    the object (h) as both the input and the output.
+    
+    - Script:
+    see demo\demo_script
+    
+    Tip:
+    If you are not familiar with 'objects', it behaves pretty much like a
+    struct with fields (e.g. access 'timeInfo' by typing 'h.timeInfo').
+    Only the dependent properties are a little different, e.g. 'roiIX' is  
+    calculated from 'h.IsCell' only when retrieved.
+    
+    === CUSTOMIZATION ===
+    
+    Here are lists of functions that need to be customized for various
+    scenarios.
+    
+    1. Imaging data input, if using non-suit2p *proc.mat files
+    - input\initSessionData
+    - input\loadSessionData
+    
+    2. Stimulus/behavior input data, a file we call 'frameInfo' 
+    (currently, information about each frame is saved as a struct, and 
+    a field 'EventInfo' holds a raw stimulus code)
+    - input\get_stimCode_from_frameInfo_API': output of this function is
+    a vector of 1*nFrames, non-negative interger values to represent
+    unique stimulus types. Also specify stimulus code keys here. 
+
+    3. Stimulus paradigms (stimulus code corresponding to experimental design)    
+    - input\parseStimCode    
+    - @ImageClass\getTimeIndex
+    - input\getStimAvgTimeIndex    
+            
     %}
-    
-    properties (SetAccess=private) % when housekeeping functions are moved into Class code
-        
-        %         M % dynamically sliced calcium traces, depends on cIX and tIX
-        %         M_0 % depends on tIX
-        %         stim % depends on tIX
-        %         behavior % depends on tIX
-        
-        %         vis.clrmap % depends on cIX, gIX, numK and clrmaptype?
-        
-        %         absIX % depends on IsCell
-    end
-    %     properties (Constant)
-    %
-    %     end
-    properties (Dependent, Hidden)
-        % for renaming purposes
-    end
-    
+
     properties
-        %
-        hfig % ?? where is it used?
+        % figure handle of the main GUI
+        hfig % exist(h.hfig) is also used in scripts to check whether running GUI window vs. stand-alone scripts
         
-        % load data
-        dat = []; %loadProcMat; % flag % load from suite2p output (procmat)
-        timeInfo
+        % storage of input data (static for a given data session)
+        dat = struct % store suite2p output data (*_proc.mat) exactly as is into this field
+        timeInfo = struct % load frameInfo data that contains frame-by-frame stim/behavior info, parse into relevant params and store here as a struct
         
-        % core properties, for slicing
+        % core (dynamic) properties, for slicing functional data 'M' [see properties (SetAccess=private)]
         tIX % time index array, 1xn
         cIX % cell index array, or 'chosen'; nx1
-        
-        %         absIX % absIX = find(IsCell); ROI index array ('absolute index', does not change with curation)
-        
-        
+                
         % operations and display
         gIX % grouping index array, for clustering/color display % same size as cIX
         numK % number of groups/colors, corresponding to colormap
         %         clrmap % colormap
         
-        cellvsROI
+        cellvsROI % flag, 1 = show cells, 0 = show ROI's
+        
+        IsCell % logical array of 0's (this ROI is not a cell) and 1's (this ROI is considered a cell)
+        IsChosen % if show cells, IsChosen = IsCell; elseif show ROIs, IsChosen = 1:nROIs        
         
         % visualization fields
-        vis = struct
-        % options (set from gui), may be used in analysis
-        ops = struct
+        vis = struct % see constructor for fields
+        
+        % options (mostly set from gui, can use in scripts too)
+        ops = struct % see constructor for fields
+        
         % properties only used in gui (e.g. gui element handles and cache)
-        gui = struct
+        gui = struct % see constructor for fields
         
         %% these should be private set
+%         M % dynamically sliced calcium traces, depends on cIX and tIX
+%         M_0 % traces for all ROI's (not just cells), depends on tIX
+%         stim % depends on tIX
+%         behavior % depends on tIX
+        
+        %% template for future fields
+        % convinient to have a struct that can be grown after classdef
+        temp = struct        
+        
+    end
+    
+    properties (SetAccess=private) % when housekeeping functions are moved into Class code        
         M % dynamically sliced calcium traces, depends on cIX and tIX
         M_0 % traces for all ROI's (not just cells), depends on tIX
-        
-        % TBD
         stim % depends on tIX
-        behavior % depends on tIX
-        
-        %% temp or convinience fields
-        temp = struct
-        IsCell % absIX = find(IsCell);
-        IsChosen % if show cells, IsChosen = IsCell; else, IsChosen = 1:nROIs
-        
-        % dependent values?
-        %         nROI = length(IsCell);
-        %         nCell = length(absIX);
-        
+        %         behavior % depends on tIX
     end
     
-    properties (Dependent)
-        roiIX % absIX corresponding to the current selection of cIX, roiIX = absIX(cIX);
-        absIX % absIX = find(IsChosen); ROI index array ('absolute index', does not change with curation)
-        
-        nROIs
-        nCells
+    properties (Dependent) % dependent properties only calculated when accessed        
+        roiIX % ROI index corresponding to cIX - the current selection of cells (or ROI's)
+        nROIs % total number of ROI's in this session
+        nCells % total number of cells in this session
     end
-    
-    
+
     methods
         %% constructor % load
         function h = ImageClass()
@@ -115,9 +129,7 @@ classdef ImageClass % h = ImageClass
             
             % data format
             ops.isZscore = 1;
-            
-            %             ops.cellvsROI = 1;
-            
+
             h.ops = ops;
             
             %% gui % init in GUI?
@@ -148,14 +160,11 @@ classdef ImageClass % h = ImageClass
             
             h.gui = gui;
         end
+        
         %% property get/set methods
-        
-        function val = get.absIX(h)
-            val = find(h.IsChosen);
-        end
-        
         function val = get.roiIX(h)
-            val = h.absIX(h.cIX);
+            absIX = find(h.IsChosen); 
+            val = absIX(h.cIX);
         end
         
         function val = get.nROIs(h)
@@ -183,17 +192,12 @@ classdef ImageClass % h = ImageClass
         %         function obj = set.cellIndex(obj,val)
         %             obj.cIX = val;
         %         end
-        
-        %% functions in separate files (in this class folder)
-%         test(h);
-%         h = loadSessionData(h);
-        
-        %% local functions (defined here)
+                
+        %% (template) local functions (defined here)
+        % (or place functions in separate files in this class folder)
         function View(h)
             figure();
-            imagesc(h.Traces)
+            imagesc(h.M)
         end
-    end
-    
-    
+    end        
 end

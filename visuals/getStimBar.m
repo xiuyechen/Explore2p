@@ -10,6 +10,9 @@ x = stim;
 
 % 
 U = unique(stim);
+% @@@@@@@@@ by default, do not display rest period ~ stimCode=0
+U(U==0) = [];
+
 cmap = jet(nStim);
 for ii = 1:length(U)
     i_stim = U(ii);

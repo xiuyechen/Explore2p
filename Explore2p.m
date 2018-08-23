@@ -6,8 +6,8 @@ function h = Explore2p(varargin)
 
 %% testing
 % convenience flag for testing phase: init load demo data
-global isTesting;
-isTesting = true;
+global isDemo;
+isDemo = true;
 
 %% init
 h = ImageClass(); % code to construct/init infrastructure in here 
@@ -32,13 +32,21 @@ uimenu(hm_file,'Label','Load data...',...
     'Callback',@menu_loadmat_Callback);
 
 uimenu(hm_file,'Label','Export to workspace',...
+    'Separator','on',...
     'Callback',@menu_export_workspace_Callback);
 
+uimenu(hm_file,'Label','Import from workspace',...
+    'Callback',@menu_import_workspace_Callback);
+
 uimenu(hm_file,'Label','Pop-up plot',...
+    'Separator','on',...
     'Callback',@menu_popupPlot_Callback);
 
-uimenu(hm_file,'Label','Save GUI session',...
+uimenu(hm_file,'Label','Save updated input file (proc.mat)',...
     'Separator','on',...
+    'Callback',@menu_updateProcmat_Callback);
+
+uimenu(hm_file,'Label','Save GUI session',...
     'Callback',@menu_saveGUIsession_Callback);
 
 uimenu(hm_file,'Label','Open GUI session...',...
@@ -62,6 +70,11 @@ h.gui.isCellvsROI = uimenu(hm_edit,'Label','Indexing: cell vs. ROI',...
     'Separator','on',...
     'Checked','on',...
     'Callback',@menu_cellvsROI_Callback);
+
+h.gui.isZscore = uimenu(hm_edit,'Label','Normalized (z-score)',...
+    'Separator','on',...
+    'Checked','on',...
+    'Callback',@menu_isZscore_Callback);
 
 %% Menu 3: View
 hm_view = uimenu(hfig,'Label','View');
@@ -97,26 +110,13 @@ h.gui.showLegend = uimenu(hm_view,'Label','Show stimulus legend',...
     'Separator','on',...
     'Callback',@menu_showLegend_Callback);
 
-%% Menu 1: Custom
+%% Menu 4: Custom
 hm_file = uimenu(hfig,'Label','Custom');
 
-uimenu(hm_file,'Label','Load data...',...
-    'Callback',@menu_loadmat_Callback);
+uimenu(hm_file,'Label','template',...
+    'Callback',@menu_template_Callback);
 
-uimenu(hm_file,'Label','Export to workspace',...
-    'Callback',@menu_export_workspace_Callback);
-
-uimenu(hm_file,'Label','Pop-up plot',...
-    'Callback',@menu_popupPlot_Callback);
-
-uimenu(hm_file,'Label','Save GUI session',...
-    'Separator','on',...
-    'Callback',@menu_saveGUIsession_Callback);
-
-uimenu(hm_file,'Label','Open GUI session...',...
-    'Callback',@menu_loadGUIsession_Callback);
-
-%% Menu 4: Help
+%% Menu 5: Help
 hm_help = uimenu(hfig,'Label','Help');
 h.gui.help = uimenu(hm_help,'Label','Getting Started',...
     'Callback',@menu_help_Callback);
@@ -150,7 +150,8 @@ i_tab = 1;
 i=1;n=3;
 i_row = 1;
 uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster range',...
-    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in range to display, e.g. ''1,3-5'',''2:4'';''1:end'' to show all');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
@@ -245,7 +246,7 @@ uicontrol('Parent',tab{i_tab},'Style','text','String','Colormap',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','popupmenu',...
-    'String',{'hsv','random clrs','jet','hsv(old)'},...
+    'String',{'random clrs','hsv','jet','hsv(old)'},...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
     'Callback',@popup_chooseclrmap_Callback);
 
@@ -280,8 +281,7 @@ i_tab = 4;
 % edit_kmeans_Callback
 i=1;n=3;
 i_row = 1;
-h.gui.framerange = ...
-    uicontrol('Parent',tab{i_tab},'Style','text','String','k-means',...
+uicontrol('Parent',tab{i_tab},'Style','text','String','k-means',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
@@ -290,17 +290,37 @@ uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
 
 i=i+n;n=3;
 i_row = 1;
-h.gui.framerange = ...
-    uicontrol('Parent',tab{i_tab},'Style','text','String','test',...
+h.gui.demotextbox = ...
+    uicontrol('Parent',tab{i_tab},'Style','text','String','(demo: skip cells)',...
+    'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left',...
+    'ToolTipString','Type in an integer n to skip every nth cell');
+i_row = 2;
+uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',{@edit_template_Callback});
+
+%% UI tab 5: Save Clusters
+i_tab = 5;
+
+% edit_saveGUIcluster
+i=1;n=3;
+i_row = 1;
+uicontrol('Parent',tab{i_tab},'Style','text','String','Cluster name',...
     'Position',[grid(i) yrow(i_row)-dTextHt bwidth*n rheight],'HorizontalAlignment','left');
 i_row = 2;
 uicontrol('Parent',tab{i_tab},'Style','edit','String','',...
     'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
-    'Callback',{@edit_kmeans_Callback});
+    'Callback',{@edit_saveGUIcluster});
+
+i=i+n;n=3;
+uicontrol('Parent',tab{i_tab},'Style','pushbutton','String','Load clusters...',...
+    'Position',[grid(i) yrow(i_row) bwidth*n rheight],...
+    'Callback',@pushbutton_loadclusters_Callback);
+
 
 %% testing
 % testing phase: init load demo data
-if isTesting
+if isDemo
     h = loadSessionData(h);
     refreshFigure(h);
 end
@@ -317,14 +337,31 @@ end
 function menu_loadmat_Callback(hObject,~)
 h = guidata(hObject);
 h = loadSessionData(h);
-guidata(hObject, h);
-
 refreshFigure(h);
+guidata(hObject, h);
 end
 
 function menu_export_workspace_Callback(hObject,~)
 h = guidata(hObject);
 assignin('base', 'h', h);
+end
+
+function menu_import_workspace_Callback(hObject,~)
+h = guidata(hObject);
+
+% import cIX, gIX, and optionally tIX
+cIX = evalin('base','cIX');
+gIX = evalin('base','gIX');
+if exist('tIX','var')
+    tIX = evalin('base','tIX');
+else
+    tIX = h.tIX;
+end
+numK = max(gIX);
+
+h = updateIndices(h,h.cellvsROI,cIX,gIX,numK,tIX);
+refreshFigure(h);
+guidata(hObject, h);
 end
 
 function menu_popupPlot_Callback(hObject,~)
@@ -334,6 +371,28 @@ fig_width = scrn(3)*0.5;
 fig_height = scrn(4)*0.45; % effective plot is same size as in GUI window
 hfig2 = figure('Position',[scrn(3)*0.2, scrn(4)*0.05, fig_width, fig_height]);
 refreshFigure(h,hfig2);
+end
+
+function menu_updateProcmat_Callback(hObject,~)
+h = guidata(hObject); 
+
+% update the IsCell param to dat struct
+dat = h.dat;
+for j = 1:numel(dat.stat)
+    dat.stat(j).iscell = h.IsCell(j);    
+end
+
+% set default file name
+datestamp = datestr(now,'mmddyy');
+[~,name,ext] = fileparts(dat.filename);
+filename = [name,'_',datestamp,'_proc',ext];
+
+% UI get save path
+[file,path] = uiputfile(filename,'Save curated data in Suite2p output format');
+filedir = fullfile(path,file);
+
+% save dat
+save(filedir,'dat');
 end
 
 function menu_saveGUIsession_Callback(hObject,~)
@@ -353,6 +412,7 @@ function menu_loadGUIsession_Callback(hObject,~)
 h = guidata(hObject);
 [file,path] = uigetfile('*.mat','Load a saved GUI session');
 load(fullfile(path,file),'h');
+guidata(hObject, h);
 end
 
 %% Menu 2: Edit
@@ -462,27 +522,35 @@ function menu_traceAvg_Callback(hObject,~)
 h = guidata(hObject);
 h = toggleMenu(h,h.gui.isStimAvg,'ops','isStimAvg');
 tIX = getTimeIndex(h);
-h = updateIndices(h,h.cellvsROI,tIX);
+h = updateIndices(h,h.cellvsROI,h.cIX,h.gIX,h.numK,tIX);
 refreshFigure(h);
 guidata(hObject, h);
 end
 
 function menu_cellvsROI_Callback(hObject,~)
 h = guidata(hObject);
-[h,cellvsROI] = toggleMenu(h,h.gui.isCellvsROI);
+[h,cellvsROI_new] = toggleMenu(h,h.gui.isCellvsROI);
 
 % convert indices
-absIX = find(h.IsCell);
-if cellvsROI % convert from roiIX... keep cells within roiIX
-   IX = ismember(absIX,h.cIX);   
-   cIX = find(IX);
-   gIX = (1:length(cIX))';
+if cellvsROI_new % convert from roiIX... keep cells within roiIX
+    roiIX = h.cIX; % old value
+    cIX = roiIX2cIX(roiIX,h.IsCell);
+    gIX = (1:length(cIX))';
 else % convert from cIX to roiIX
-    cIX = absIX(h.cIX);
+    roiIX = cIX2roiIX(h.cIX,h.IsCell);
+    cIX = roiIX; % still store as cIX, but now IsChosen is changed
     gIX = ones(length(cIX),1);
 end
 
-h = updateIndices(h,cellvsROI,cIX,gIX);
+h = updateIndices(h,cellvsROI_new,cIX,gIX);
+refreshFigure(h);
+guidata(hObject, h);
+end
+
+function menu_isZscore_Callback(hObject,~)
+h = guidata(hObject);
+h = toggleMenu(h,h.gui.isZscore,'ops','isZscore');
+h = updateIndices(h);
 refreshFigure(h);
 guidata(hObject, h);
 end
@@ -568,11 +636,24 @@ legend(hidden_h, names, 'orientation','horizontal','location','SouthOutside')
 
 end
 
-%% Menu 4: Help
+%% Menu 4: (Template)
+
+function menu_template_Callback(~,~)
+h = guidata(hObject);
+figure;
+imagesc(h.M)
+guidata(hObject, h);
+end
+
+%% Menu 5: Help
 
 function menu_help_Callback(~,~)
-msg = 'see README on https://github.com/xiuyechen/Explore2p';
+msg = ['Quick tip: hover over labels (e.g. ''Cluster range'')',...
+    'to see a tool-tip-string pop up. For an overview, see this readme on github: https://github.com/xiuyechen/Explore2p (for a link, see MATLAB command window output)'];
 helpdlg(msg);
+
+text_link = '<a href="matlab:web(''https://github.com/xiuyechen/Explore2p'');">https://github.com/xiuyechen/Explore2p</a>';
+disp(text_link);
 end
 
 %% UI tab 1: Selection
@@ -627,25 +708,45 @@ if ~isempty(str)
     temp = textscan(str,'%d');
     ix = temp{:};
     
+    % update IsCell
     if h.cellvsROI
-        % mark as not cell
-        h.IsCell(h.roiIX(ix)) = 0;
-        % update
+        % cell, mark as not cell
+        roi_ix = cIX2roiIX(ix,h.IsCell);
+        fprintf('cell #%d = roi #%d set to not-cell \n',ix,roi_ix);
+        h.IsCell(roi_ix) = 0;
+
+        % manually update indexing
+        cIX = h.cIX;
+        cIX(ix) = [];
+        cIX(ix:end) = cIX(ix:end)-1;
+        
+        gIX = h.gIX;
+        gIX(ix) = [];
+        
+        h = updateIndices(h,h.cellvsROI,cIX,gIX);
         
     else % if is ROI
-        % mark as cell
-        h.IsCell(ix) = 1;
-        % update
+        % ROI, mark as cell
+        roi_ix = ix;
+        h.IsCell(roi_ix) = 1;
+        fprintf('roi #%d set to cell \n',roi_ix);
         
+        h = updateIndices(h);
     end
-    
-    h = updateIndices(h);
-    refreshFigure(h);
-    
+
+    refreshFigure(h);    
     guidata(hObject, h);
 end
 end
 
+% roiIX = h.cIX; % old value
+% cIX = roiIX2cIX(roiIX,h.IsCell);
+% gIX = (1:length(cIX))';
+% else % convert from cIX to roiIX
+%     roiIX = cIX2roiIX(h.cIX,h.IsCell);
+%     cIX = roiIX; % still store as cIX, but now IsChosen is changed
+%     gIX = ones(length(cIX),1);
+%     
 function edit_manualtIXRange_Callback(hObject,~)
 h = guidata(hObject);
 % get/format range
@@ -658,7 +759,7 @@ if ~isempty(str)
         errordlg(msg);
     else
         tIX = range';
-        h = updateIndices(h,h.cellvsROI,tIX);
+        h = updateIndices(h,h.cellvsROI,h.cIX,h.gIX,h.numK,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -678,7 +779,7 @@ if ~isempty(str)
     else
         h.ops.rangeElm = range';
         tIX = getTimeIndex(h);
-        h = updateIndices(h,h.cellvsROI,tIX);
+        h = updateIndices(h,h.cellvsROI,h.cIX,h.gIX,h.numK,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -698,7 +799,7 @@ if ~isempty(str)
     else        
         h.ops.rangeBlocks = range';
         tIX = getTimeIndex(h);
-        h = updateIndices(h,h.cellvsROI,tIX);
+        h = updateIndices(h,h.cellvsROI,h.cIX,h.gIX,h.numK,tIX);
         refreshFigure(h);
         guidata(hObject, h);
     end
@@ -754,9 +855,9 @@ function popup_chooseclrmap_Callback(hObject,~)
 i_clr = get(hObject,'Value');
 h = guidata(hObject);
 if i_clr==1
-    h.vis.clrmaptype = 'hsv';
-elseif i_clr==2
     h.vis.clrmaptype = 'rand';
+elseif i_clr==2
+    h.vis.clrmaptype = 'hsv';
 elseif i_clr==3
     h.vis.clrmaptype = 'jet';
 elseif i_clr==4
@@ -828,6 +929,97 @@ if ~isempty(str)
     h = updateIndices(h,h.cellvsROI,h.cIX,gIX,numK);
     refreshFigure(h);
     guidata(hObject, h);   
+end
+end
+
+function edit_template_Callback(hObject,~)
+h = guidata(hObject);
+% get/format range
+str = get(hObject,'String');
+if ~isempty(str)
+    temp = textscan(str,'%d');
+    input_integer = temp{:};
+    
+    disp(['Your input ',num2str(input_integer),' is received.']);
+    disp('Look for ''edit_template_Callback'' in the ''Explore2p.m'' code.');
+    
+    % popular variables to use: h.M, h.cIX, h.gIX. See ImageClass classdef
+    % ...custom code...
+    % example:
+    cIX = h.cIX; % currently selected indices (originally named for Cell Indices, now also used when selecting ROI's)
+    gIX = h.gIX; % group index (originally used to assign cluster id; used to show different clusters in different colors)
+    
+    step = input_integer;
+    cIX = cIX(1:step:end);
+    gIX = gIX(1:step:end);
+    
+    % Then use 'updateIndices' to update changed variables, see updateIndices help
+    % for this example:
+    h = updateIndices(h,h.cellvsROI,cIX,gIX);
+    refreshFigure(h);
+    guidata(hObject, h);   
+end
+end
+
+%% UI tab 5: Save Clusters
+
+function edit_saveGUIcluster(hObject,~) % state: 'current' or 'new'
+h = guidata(hObject);
+inputstr = get(hObject,'String');
+
+s = [];
+s.cellvsROI = h.cellvsROI;
+s.cIX = h.cIX;
+s.gIX = h.gIX;
+s.numK = h.numK;
+s.tIX = h.tIX;
+s.IsCell = h.IsCell;
+s.roiIX = h.roiIX;
+
+% s.M = h.M;
+% s.M_0 = h.M_0;
+
+% set default file name
+datestamp = datestr(now,'mmddyy');
+[~,name,ext] = fileparts(h.dat.filename);
+filename = [name,'_',datestamp,'_cluster_',inputstr,ext];
+
+% UI get save path
+[file,path] = uiputfile(filename,'Save curated data in Suite2p output format');
+filedir = fullfile(path,file);
+
+% save dat
+save(filedir,'s');
+end
+
+
+function pushbutton_loadclusters_Callback(hObject,~)
+h = guidata(hObject);
+[file,path] = uigetfile('*.mat','Load a saved cluster file (.mat)');
+load(fullfile(path,file),'s');
+
+cellvsROI = s.cellvsROI;
+cIX = s.cIX;
+gIX = s.gIX;
+numK = s.numK;
+tIX = s.tIX;
+% h.roiIX = s.roiIX; % dependent property
+
+if ~isequal(h.IsCell,s.IsCell)    
+    answer = questdlg('Are you sure you want to overwrite current cell curation?');
+    if answer
+        h.IsCell = s.IsCell;
+        
+        h = updateIndices(h,cellvsROI,cIX,gIX,numK,tIX);
+        refreshFigure(h);
+        guidata(hObject, h);
+    else
+        disp('cluster import aborted');
+    end
+else
+    h = updateIndices(h,cellvsROI,cIX,gIX,numK,tIX);
+    refreshFigure(h);
+    guidata(hObject, h);
 end
 end
 

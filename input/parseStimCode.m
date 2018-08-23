@@ -1,8 +1,10 @@
-function h = parseFrameInfo(h,frameInfo,nFrames)
+function h = parseStimCode(h,stimCode,nFrames)
 % parseFrameInfo(h,frameInfo)
 % parseFrameInfo(h,[],nFrames): when no frameInfo file exists, create scaffold
+%
+% the frameInfo 
 
-if isempty(frameInfo)
+if isempty(stimCode)
     
     stimCode = ones(1,nFrames);
     
@@ -12,19 +14,13 @@ if isempty(frameInfo)
     t.pauseChunks = [];
     t.stimCodeValueArray = 1;
     t.stimCodeNameArray = {'all'};
-%     
+     
 %     %     t.stimChunks = [];
 %     %     t.stimChunks(ii).ix = getElementIndices(stimCode, t.stimCodeValueArray(ii));
 %     %     t.stimChunks(ii).name = t.stimCodeNameArray{ii};
 %     %     t.stimChunks(ii).nReps = numel(t.stimChunks(ii).ix);
-else
-    
-    rawcodes = extractfield(frameInfo, 'EventValue');
-    
-    [C,ia,ic] = unique(rawcodes);
-    % C = [0,0.2,0.4,0.6,0.8,1]; % for test data
-    stimCode = ic'-1; % codes are now integers. new code 0 corresponds to raw 0
-    
+
+else            
     %% make time index structure
     t = [];
     

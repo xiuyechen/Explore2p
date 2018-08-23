@@ -6,16 +6,18 @@ if nargin == 2 % draw on popup window
     ax_ht_ratio = 0.9;
 else % draw on GUI
     hfig = h.hfig;
-    ax_ht_ratio = 0.8;
-    
-    % clean-up canvas
-    allAxesInFigure = findall(hfig,'type','axes');
-    if ~isempty(allAxesInFigure)
-        delete(allAxesInFigure);
-    end
+    ax_ht_ratio = 0.8;      
 end
 
 figure(hfig);
+
+% clean-up canvas
+allAxesInFigure = findall(hfig,'type','axes');
+if ~isempty(allAxesInFigure)
+    delete(allAxesInFigure);
+end
+
+% reset axes
 pos = get(hfig,'Position'); % pos(3) is width, pos(4) is height
 margin = pos(4)*0.04;
 ax_ht = pos(4)*ax_ht_ratio;

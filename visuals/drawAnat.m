@@ -46,7 +46,7 @@ H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
 % 
 %     
 % else  % use RGB 
-    clrmap_abs = zeros(length(h.absIX),3); % each cell gets a color, saved into h.clrmap for use across the gui
+    clrmap_abs = zeros(length(find(h.IsCell)),3); % each cell gets a color, saved into h.clrmap for use across the gui
     clrmat = h.vis.clrmap(h.gIX,:);
     clrmap_abs(roiIX,1) = clrmat(:,1);
     clrmap_abs(roiIX,2) = clrmat(:,2);

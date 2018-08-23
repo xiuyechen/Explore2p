@@ -2,53 +2,84 @@ function h = loadSessionData(h)
 disp('loading proc data');
 
 %% load data
-root = 'C:\Users\xiuye\Documents\2P_processed\';
 
-global isTesting
-if isTesting
-    % load suite2p output data
-    filename1 = 'F_330873-A_2018-05-17_plane1_proc.mat';
-    filepath1 = 'C:\Users\xiuye\Documents\2P_processed\Expore2p_demodata\withFrameInfo';
-    h_load = load(fullfile(filepath1, filename1));
+
+% scriptName = mfilename('fullpath');
+% [currentpath, filename, fileextension]= fileparts(scriptName);
+% code_dir = currentpath;
+
+
+dataRoot2p = getDataRoot2p();%'C:\Users\xiuye\Documents\2P_processed\';
+
+global isDemo
+if isDemo
+    % download a set of 2 demo data files (suite2p output file and frameInfo.mat)
+    url_1 = 'https://dl.dropboxusercontent.com/s/8oy4co5v3d31jnu/F_330873-A_2018-05-17_plane1_proc.mat?dl=0';
+    url_2 = 'https://dl.dropboxusercontent.com/s/h5f334co53ao76i/frameInfo.mat?dl=0';
+    if exist('demo','dir')==7
+        fileName1 = fullfile('demo','mouse0_proc.mat');
+        fileName2 = fullfile('demo','frameInfo.mat');
+    else
+        fileName1 = 'mouse0_proc.mat';
+        fileName2 = 'frameInfo.mat';
+    end
     
-    % load frameInfo
-    load('C:\Users\xiuye\Documents\2P_processed\Expore2p_demodata\withFrameInfo\frameInfo.mat','frameInfo');
+    % file 1:
+    if exist(fileName1, 'file') == 2
+        fullFileName_s2p = fileName1;
+        disp(['using demo data ',fileName1,' (Suite2p output file)']);
+    else
+        fullFileName_s2p = websave(fileName1,url_1);
+        disp(['demo data downloaded to ',fileName1,' (Suite2p output file)']);
+    end
+
+    % file 2:
+    if exist(fileName2, 'file') == 2
+        fullFileName_frameInfo = fileName2;
+        disp(['using demo data ',fileName2,' (stim/behavior file)']);
+    else
+        fullFileName_frameInfo = websave(fileName2,url_2);
+        disp(['demo data downloaded to ',fileName2,' (stim/behavior file)']);
+    end
+
+    % load files
+    h_load = load(fullFileName_s2p);
+    load(fullFileName_frameInfo,'frameInfo');
     h.ops.haveFrameInfo = 1;
-else
-    % UI choose session
-    [filename1,filepath1]=uigetfile(fullfile(root, 'F*.mat'), 'Select Data File');
+    
+else % GUI input    
+    [filename1,filepath1]=uigetfile(fullfile(dataRoot2p, 'F*.mat'), 'Select Data File');
     if isequal(filename1,0)
         disp('(File selection cancelled)')
         return;
     end
-
+    
     % load suite2p output data
     h_load = load(fullfile(filepath1, filename1));
     
-    % load frameInfo (if applicable)
+    % load frameInfo (not mandatory but recommended)
+    % default: assuming 'frameInfo.mat' is saved in the corresponding
+    % folder for each session
     try
         load(fullfile(filepath1, 'frameInfo.mat'),'frameInfo');
-        h.ops.haveFrameInfo = 1;
     catch
         [filename1,filepath1]=uigetfile(fullfile(root, '*.mat'), 'Select frameInfo File');
-        if isequal(filename1,0)
-            h.ops.haveFrameInfo = 0;
-        else
+        if ~isequal(filename1,0)
             try
                 load(fullfile(filepath1, filename1),'frameInfo.mat','frameInfo');
             catch
                 errordlg('frameInfo invalid, no stimulus/motor information loaded');
-                h.ops.haveFrameInfo = 0;
             end
         end
     end
 end
+
 %% save to GUI data
 if isfield(h_load,'dat') % proc.mat
     h.dat = h_load.dat;
-
+    
 else % this is a stub, not tested
-    h.dat = h_load; % not proc...    
+    h.dat = h_load; % not proc...
     
     %% mean image
     h.dat.maxmap = 2;
@@ -60,47 +91,10 @@ else % this is a stub, not tested
     h.dat.mimg(:,:,5) = 0;
 end
 
-%% init with data
-T = struct2table(h.dat.stat);
-h.IsCell = table2array(T(:,28));
-% h.absIX = find(h.IsCell);
-h.IsChosen = h.IsCell;
-h.ops.cellvsROI = 1;
-set(h.gui.cellRange,'BackgroundColor',[1,1,0.8]);
-set(h.gui.ROIrange,'BackgroundColor',[1,1,1]);
-
-% time points
-if h.ops.haveFrameInfo
-    h = parseFrameInfo(h,frameInfo);
+if exist('frameInfo','var')
+    h = initSessionData(h,frameInfo);
 else
-    % get number of frames from functional trace
-    F = [];
-    for j = 1:numel(h.dat.Fcell)
-        F = cat(2, F, h.dat.Fcell{j}(1, :));
-    end
-    nFrames = length(F);    
-    h = parseFrameInfo(h,[],nFrames);
+    h = initSessionData(h);
 end
-
-set(h.gui.framerange,'ToolTipString',['1-',num2str(h.timeInfo.nFrames)]);
-set(h.gui.elementrange,'ToolTipString',['1-',num2str(h.timeInfo.nElm)]);
-set(h.gui.blockrange,'ToolTipString',['1-',num2str(h.timeInfo.nBlocks)]);
-
-% default: ops.isStimAvg = 0;
-tIX = getTimeIndex(h); % tIX = 1:h.timeInfo.nFrames;
-
-% init cell selection to display
-cIX = (1:length(h.absIX))';
-gIX = (1:length(cIX))';
-numK = max(gIX);
-cellvsROI = 1;
-
-% init: manually set indices so that caching works...
-h.cIX = cIX;
-h.gIX = gIX;
-h.numK = numK;
-h.tIX = tIX;
-h.cellvsROI = cellvsROI;
-h = updateIndices(h,cellvsROI,cIX,gIX,numK,tIX);
 
 end

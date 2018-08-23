@@ -1,12 +1,21 @@
-function h = getIndexedData(h) % tIX input?
-% This function updates variables depending on tIX (M_0,M,behavior,stim)
-% Called after cIX or tIX is changed (e.g. setTimeIndex).
+function h = getIndexedData(h)
+% This function updates variables depending on currently selected cells (cIX) 
+% and time indexing (tIX, e.g. depending on averaging or trimming in time).
+% The outputs are saved under h:
+% - M_0: functional data for all segmented ROIs (rows: ROI's; cols:
+% time frames)
+% - M: functional data for all currently selected cells/ROI's (rows:
+% cells/ROI's; cols: time frames)
+% - stim: stimulus code, matching the functional data
+% (if applicable, modify code to output behavior in parallel with stim)
+%
+% The function is mainly called in updateIndices(), after either cIX or tIX is changed
 
 %% Inputs
 tIX = h.tIX;
-roiIX = h.roiIX;
+roiIX = h.roiIX; % this calculates the ROI indices corresponding to cIX, see ImageClass def
 
-% list ops
+% options
 isZscore = h.ops.isZscore;
 isStimAvg = h.ops.isStimAvg;
 
@@ -30,7 +39,7 @@ if isStimAvg
         dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
         y = double(dF);%my_conv_local(medfilt1(double(F), 3), 3);
         y_m = y-mean(y);
-        M_0(ii,:) = y_m/10000;
+        M_0(ii,:) = y_m;%/10000;
     end
     
     %% averaging (for each element, and then concatenate)
@@ -64,7 +73,7 @@ else % ~isStimAvg
         dF                  = F - bsxfun(@times, Fneu, coefNeu(:));
         y = double(dF(tIX));%my_conv_local(medfilt1(double(F), 3), 3);
         y_m = y-mean(y);
-        M_0(ii,:) = y_m/10000;
+        M_0(ii,:) = y_m;%/10000;
     end
     
     if isZscore
@@ -76,10 +85,7 @@ M = M_0(roiIX,:);
 
 %% slice stim code
 if isStimAvg
-    IX = [];
-    for ii = h.ops.rangeElm
-        IX = horzcat(IX,h.timeInfo.stimmat{1,ii}(1,:)); %#ok<AGROW>
-    end
+    IX = getStimAvgTimeIndex(h);    
     stim = h.timeInfo.stimCode(IX);
 else
     stim = h.timeInfo.stimCode(tIX);

@@ -1,64 +1,31 @@
 function tIX = getTimeIndex(h)
-% check: 
-% % % % when relevant gui ops are updated, this function computes the new tIX, 
-% % % % and updates all variables that depend on tIX (M_0 and M, beahvior and stim)
-% % % % (tIX is set but not publicly accessed)
+% when time-relevant options are updated, this function computes the new tIX 
+% options include: 
+% - whether averaging based on stimulus repetitions
+% - range of elements selected
+% - range of experimental blocks selected
+% 
+% this can be further adapted to suit particular stimulus paradigms
 
-
-%% input params
-
-isStimAvg = h.ops.isStimAvg;
-rangeBlocks = h.ops.rangeBlocks;
-% % expt blocks (sessions)??
-% % stim ID (block type) stimilar to old stimrange
-
-% shorthand
+%% inputs
 t = h.timeInfo;
+isStimAvg = h.ops.isStimAvg;
+rangeElm = h.ops.rangeElm;
+rangeBlocks = h.ops.rangeBlocks;
 
 %% set tIX
 if isStimAvg 
-    tIX = cell(1,length(h.ops.rangeElm));
-    for ii = 1:length(h.ops.rangeElm)
-        i_elm = h.ops.rangeElm(ii);
-%         tIX = t.stimmat(h.ops.rangeElm); % iscell(tIX) = true;
-        tIX{ii} = cell2mat(t.stimmat(h.ops.rangeBlocks,i_elm));        
+    tIX = cell(1,length(rangeElm));
+    for ii = 1:length(rangeElm)
+        i_elm = rangeElm(ii);
+        tIX{ii} = cell2mat(t.stimmat(rangeBlocks,i_elm));        
     end
 
 else
     tIX = [];
     for i_block = rangeBlocks
-        tIX = [tIX, t.blockStarts(i_block):t.blockStops(i_block)];
+        tIX = [tIX, t.blockStarts(i_block):t.blockStops(i_block)]; %#ok<AGROW>
     end
 end
 
-% setappdata(hfig,'tIX',tIX);
-
-%% set M_0
-% [M_0,behavior,stim] = GetTimeIndexedData(hfig,'isAllCells');
-% setappdata(hfig,'M_0',M_0);
-% 
-%% set M again
-% cIX = getappdata(hfig,'cIX');
-% if ~isempty(M_0)
-%     M = M_0(cIX,:);
-% else
-%     M = [];
-% end
-% setappdata(hfig,'M',M);
-
-%% recalculate stimulus regressors?? this is not dealt with in getIndexed Data
-
-
-% stim = getappdata(hfig,'stim');
-% fishset = getappdata(hfig,'fishset');
-% 
-% [~, names] = GetStimRegressor(stim,fishset);
-% 
-% s = cell(size(names));
-% for i = 1:length(names),
-%     s{i} = [num2str(i),': ',names{i}];
-% end
-% 
-% global hstimreg;
-% set(hstimreg,'String',['(choose)',s]);
 end
