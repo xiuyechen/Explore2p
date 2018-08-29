@@ -7,11 +7,17 @@ function h = initSessionData(h,frameInfo)
 T = struct2table(h.dat.stat);
 h.IsCell = table2array(T(:,28));
 
+% for pre-curated input data (Suite2p output but not *proc.mat)
+if length(find(h.IsCell))==0 %#ok<ISMT>
+    h.IsCell = ones(size(h.IsCell));
+end
+
 % parse frameInfo (extract stimCode; TODO: add behavior)
 if exist('frameInfo','var')
     h.ops.haveFrameInfo = 1;
-    stimCode = get_stimCode_from_frameInfo_API(frameInfo);
+    [stimCode,stimCodeNameArray] = get_stimCode_from_frameInfo_API(frameInfo);    
     h = parseStimCode(h,stimCode);
+    h.timeInfo.stimCodeNameArray = stimCodeNameArray;
 else
     h.ops.haveFrameInfo = 0;
     % make dummy stimCode

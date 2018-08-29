@@ -6,8 +6,11 @@ function h = Explore2p(varargin)
 
 %% testing
 % convenience flag for testing phase: init load demo data
-global isDemo;
-isDemo = true;
+if nargin == 1
+    isDemo = varargin{1};
+else
+    isDemo = 0;
+end
 
 %% init
 h = ImageClass(); % code to construct/init infrastructure in here 
@@ -71,6 +74,9 @@ h.gui.isCellvsROI = uimenu(hm_edit,'Label','Indexing: cell vs. ROI',...
     'Checked','on',...
     'Callback',@menu_cellvsROI_Callback);
 
+uimenu(hm_edit,'Label','Save current selection as IsCell (!)',...
+    'Callback',@menu_currentAsIsCell_Callback);
+
 h.gui.isZscore = uimenu(hm_edit,'Label','Normalized (z-score)',...
     'Separator','on',...
     'Checked','on',...
@@ -128,7 +134,7 @@ set(gcf,'defaultUicontrolBackgroundColor',[1 1 1]);
 % tab group setup
 M_names = {'Selection','Operations','Regression','Clustering','Saved Clusters'};
 
-h.gui.tgroup = uitabgroup('Parent', hfig, 'Unit','pixels','Position', [50,fig_height-80,fig_width-100,80]);
+h.gui.tgroup = uitabgroup('Parent', hfig, 'Unit','pixels','Position', [50,fig_height-100,fig_width-100,100]);
 numtabs = length(M_names);
 tab = cell(1,numtabs);
 for i = 1:numtabs
@@ -384,11 +390,17 @@ end
 
 % set default file name
 datestamp = datestr(now,'mmddyy');
-[~,name,ext] = fileparts(dat.filename);
-filename = [name,'_',datestamp,'_proc',ext];
+if isfield(dat,'filename')
+    [~,name,ext] = fileparts(dat.filename);
+    filename = [name,'_',datestamp,'_proc',ext];
+    
+    % UI get save path
+    [file,path] = uiputfile(filename,'Save curated data in Suite2p output format');
+else
+    % UI get save path
+    [file,path] = uiputfile('*.mat','Save curated data in Suite2p output format');
+end
 
-% UI get save path
-[file,path] = uiputfile(filename,'Save curated data in Suite2p output format');
 filedir = fullfile(path,file);
 
 % save dat
@@ -547,6 +559,34 @@ refreshFigure(h);
 guidata(hObject, h);
 end
 
+function menu_currentAsIsCell_Callback(hObject,~)
+h = guidata(hObject);
+
+choice = questdlg(['Toggling cell-assignment changes cell indexing;' ...
+    'also you need to save it using File\Save updated input file (proc.mat).' ...
+    'Would you like to proceed?'], ...
+    'Warning'); % Yes/No/Cancel
+
+% Handle response
+if strcmp(choice,'Yes')
+    
+    roiIX = cIX2roiIX(h.cIX,h.IsCell);
+    
+    % REWRITE ISCELL
+    
+    IsCell_ = zeros(size(h.IsCell));
+    IsCell_(roiIX) = 1;
+    h.IsCell = logical(IsCell_);
+    
+    cIX = (1:length(h.cIX))';
+    gIX = (1:length(h.cIX))';
+    numK = max(gIX);
+    h = updateIndices(h,h.cellvsROI,cIX,gIX,numK);
+    refreshFigure(h);
+    guidata(hObject, h);
+end
+end
+
 function menu_isZscore_Callback(hObject,~)
 h = guidata(hObject);
 h = toggleMenu(h,h.gui.isZscore,'ops','isZscore');
@@ -613,25 +653,23 @@ h = guidata(hObject);
 names = h.timeInfo.stimCodeNameArray;
 
 %% get trial-averaged stimulus
-IX = [];
-for ii = h.ops.rangeElm
-    IX = horzcat(IX,h.timeInfo.stimmat{ii}(1,:)); %#ok<AGROW>
-end
+IX = getStimAvgTimeIndex(h);
 stim = h.timeInfo.stimCode(IX);
 
 %% draw stimbar
-figure('Position',[100,500,500,130]);hold on;
+figure('Position',[100,500,800,130]);hold on;
 title('Stimulus bar (1 repetition)')
 roughhalfbarheight = 1;
-[stimbar,~,cmap] = getStimBar(roughhalfbarheight,stim); % horizontal stimulus bar
+[stimbar,~,cmap] = getStimBar(roughhalfbarheight,stim,h.timeInfo.nElm); % horizontal stimulus bar
 image(stimbar);axis off; axis tight
 colormap(cmap);
 
 % draw legend
 hidden_h = [];
-for ii = 1 : 5
+for ii = 1 : h.timeInfo.nElm
     hidden_h(ii) = surf(uint8(ii-[1 1;1 1]), 'edgecolor', 'none','facealpha',0); 
 end
+
 legend(hidden_h, names, 'orientation','horizontal','location','SouthOutside')
 
 end
@@ -745,15 +783,7 @@ if ~isempty(str)
     end
 end
 end
-
-% roiIX = h.cIX; % old value
-% cIX = roiIX2cIX(roiIX,h.IsCell);
-% gIX = (1:length(cIX))';
-% else % convert from cIX to roiIX
-%     roiIX = cIX2roiIX(h.cIX,h.IsCell);
-%     cIX = roiIX; % still store as cIX, but now IsChosen is changed
-%     gIX = ones(length(cIX),1);
-%     
+   
 function edit_manualtIXRange_Callback(hObject,~)
 h = guidata(hObject);
 % get/format range
@@ -833,7 +863,7 @@ switch rankID
         T = struct2table(h.dat.stat);        
         skew = table2array(T(:,22));
         A = skew(h.roiIX,1);
-        [~,IX_sort] = sort(A,'ascend');
+        [~,IX_sort] = sort(A,'descend');
         cIX = h.cIX(IX_sort);
         gIX = (1:length(cIX))';
     case 3 % 'num pixels'
@@ -997,8 +1027,8 @@ filedir = fullfile(path,file);
 
 % save dat
 save(filedir,'s');
+disp(['Saved clusters in: ' filedir]);
 end
-
 
 function pushbutton_loadclusters_Callback(hObject,~)
 h = guidata(hObject);
@@ -1066,6 +1096,6 @@ if ~isempty(h) % empty at initial opening of GUI
     pos = get(h.hfig,'Position');
     fig_width = pos(3);
     fig_height = pos(4);
-    set(h.gui.tgroup,'Position',[50,fig_height-80,fig_width-100,80]);
+    set(h.gui.tgroup,'Position',[50,fig_height-100,fig_width-100,100]);
 end
 end

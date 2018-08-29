@@ -6,10 +6,12 @@ roiIX = h.roiIX;
 im_bg0 = squeeze(h.dat.mimg(:,:,2));
 
 % ROI image
-Sat1     =  ones(h.dat.cl.Ly, h.dat.cl.Lx);
-Sat2     =  ones(h.dat.cl.Ly, h.dat.cl.Lx);
-H1              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
-H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
+Lx = h.dat.ops.Lx;
+Ly = h.dat.ops.Ly;
+Sat1 = ones(Ly, Lx);
+Sat2 = ones(Ly, Lx);
+H1 = zeros(Ly, Lx);
+H2 = zeros(Ly, Lx);
 
 % % chose cells
 % for i = 1:length(h.dat.stat)
@@ -18,8 +20,12 @@ H2              = zeros(h.dat.cl.Ly, h.dat.cl.Lx);
 % %
 % [iclust1, iclust2, V1, V2] = ...
 %     getviclust(h.dat.stat, h.dat.cl.Ly,  h.dat.cl.Lx, h.dat.cl.vmap, h.dat.F.ichosen);
-
-[iclust1,V1] = getviclustRange(h.dat.stat, h.dat.cl.Ly,  h.dat.cl.Lx, h.dat.cl.vmap, roiIX);
+if isfield(h.dat,'cl')
+    vmap = h.dat.cl.vmap;
+else
+    vmap = 'unit';
+end
+[iclust1,V1] = getviclustRange(h.dat.stat, Ly,  Lx, vmap, roiIX);
 
 % iselect in Suite2p is drawn in gray;
 % iselect     = iclust1==h.dat.F.ichosen;

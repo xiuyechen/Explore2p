@@ -63,7 +63,7 @@ else % GUI input
     try
         load(fullfile(filepath1, 'frameInfo.mat'),'frameInfo');
     catch
-        [filename1,filepath1]=uigetfile(fullfile(root, '*.mat'), 'Select frameInfo File');
+        [filename1,filepath1]=uigetfile(fullfile(dataRoot2p, '*.mat'), 'Select frameInfo File, press ''Cancel'' if N/A');
         if ~isequal(filename1,0)
             try
                 load(fullfile(filepath1, filename1),'frameInfo.mat','frameInfo');
@@ -86,7 +86,7 @@ else % this is a stub, not tested
     ops = h.dat.ops;
     if isfield(ops, 'mimg1') && ~isempty(ops.mimg1)
         h.dat.mimg(:,:,h.dat.maxmap) = ops.mimg1(ops.yrange, ops.xrange);
-        h.dat.mimg_proc(:,:,h.dat.maxmap) = normalize_image(h.dat.mimg(:,:,h.dat.maxmap));
+%         h.dat.mimg_proc(:,:,h.dat.maxmap) = normalize_image(h.dat.mimg(:,:,h.dat.maxmap));
     end
     h.dat.mimg(:,:,5) = 0;
 end

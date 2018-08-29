@@ -78,12 +78,6 @@ classdef ImageClass % h = ImageClass
         % properties only used in gui (e.g. gui element handles and cache)
         gui = struct % see constructor for fields
         
-        %% these should be private set
-%         M % dynamically sliced calcium traces, depends on cIX and tIX
-%         M_0 % traces for all ROI's (not just cells), depends on tIX
-%         stim % depends on tIX
-%         behavior % depends on tIX
-        
         %% template for future fields
         % convinient to have a struct that can be grown after classdef
         temp = struct        

@@ -1,5 +1,11 @@
-function  h = getColormap(h)
-numK = h.numK;
+function  h = getColormap(h,numK)
+if ~exist('numK','var')
+    numK = h.numK;
+    if isempty(numK) || numK ==0
+        disp('colormap empty')
+        return;
+    end
+end
 
 if strcmp(h.vis.clrmaptype,'hsv') % use HSV coding, which, in the Value channel includes information from 'lambda' (from ROI stats)    
 %     huemap = linspace(0,0.8,numK); % to make a custom hsv map that doesn't include the circular overlap range in magenta-red (by not using range 0 to 1)

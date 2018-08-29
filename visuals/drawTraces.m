@@ -166,13 +166,18 @@ switch isPlotLines
             
             % color
             igroup = gIX(ii);
-            clr = clrmap(igroup,:)*0.9;
+            try
+                clr = clrmap(igroup,:)*0.9;
+            catch
+                warning('colormap error in drawTraces.m');
+                h = getColormap(h,nTraces);
+                clrmap = h.vis.clrmap;
+                clr = clrmap(igroup,:)*0.9;
+            end
             
             % plot
-%             plot(y_n - pad*(ii-1),'color',clr);%[0.5,0.5,0.5])
             plot(xv,y_n - pad*(ii-1),'color',clr);%[0.5,0.5,0.5])
-%             axis fill
-            
+ 
             % draw text on left of traces
             if isShowTextFunc && nTraces<100
                 str = num2str(cIX(ii));

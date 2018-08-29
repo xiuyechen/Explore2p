@@ -23,13 +23,13 @@ if isempty(stimCode)
 else            
     %% make time index structure
     t = [];
-    
-    t.nFrames = numel(stimCode);
+    nFrames = numel(stimCode);
+    t.nFrames = nFrames;
     t.stimCode = stimCode;
-    
-    % manual input
+        
     t.pauseChunks = getElementIndices(stimCode, 0); % codes size 1xn % rest period between blocks of stimulation
-    t.stimCodeValueArray = 1:(length(unique(stimCode))-1);%[0.2,0.4,0.6,0.8,1];% not counting 0
+    t.stimCodeValueArray = 1:max(stimCode); % not counting 0    
+    
     if length(t.stimCodeValueArray)==5
         t.stimCodeNameArray = {'A','B','C','D','Grey'}; % manual
     else

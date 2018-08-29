@@ -21,7 +21,7 @@ if ~exist('gIX','var')
     gIX = h.gIX;
 end
 if ~exist('numK','var')
-    numK = h.numK;
+    numK = max(h.numK,max(gIX));
 end
 if ~exist('tIX','var')
     tIX = h.tIX;

@@ -24,6 +24,11 @@ ax_ht = pos(4)*ax_ht_ratio;
 h2 = axes('Units','pixels','Position',[pos(3)-ax_ht-margin,margin,ax_ht,ax_ht],'Units','pixels');
 h1 = axes('Units','pixels','Position',[margin*2, margin, pos(3)-ax_ht-margin*4, ax_ht]);
 
+%% check
+if isempty(h.cIX)
+    warning('no cells to display - go back');
+    return;
+end
 %% make colormap
 % h.clrmaptype = 'rand'; %'hsv';%% manual
 h = getColormap(h);
