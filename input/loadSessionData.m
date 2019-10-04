@@ -14,8 +14,8 @@ dataRoot2p = getDataRoot2p();%'C:\Users\xiuye\Documents\2P_processed\';
 global isDemo
 if isDemo
     % download a set of 2 demo data files (suite2p output file and frameInfo.mat)
-    url_1 = 'https://dl.dropboxusercontent.com/s/8oy4co5v3d31jnu/F_330873-A_2018-05-17_plane1_proc.mat?dl=0';
-    url_2 = 'https://dl.dropboxusercontent.com/s/h5f334co53ao76i/frameInfo.mat?dl=0';
+    url_1 = 'https://www.dropbox.com/s/c1d7arckqytpp37/f_330873-a_2018-05-17_plane1_proc.mat?dl=0';
+    url_2 = 'https://www.dropbox.com/s/h4x86pajjeyqbtf/frameinfo.mat?dl=0';
     if exist('demo','dir')==7
         fileName1 = fullfile('demo','mouse0_proc.mat');
         fileName2 = fullfile('demo','frameInfo.mat');
